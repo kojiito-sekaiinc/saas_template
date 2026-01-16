@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone as dt_timezone
 
 import stripe
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -39,11 +40,10 @@ def checkout(request):
     # Get or create BillingProfile
     billing_profile, _ = BillingProfile.objects.get_or_create(user=request.user)
 
-    # Build absolute URLs for success/cancel
-    scheme = "https" if request.is_secure() else "http"
-    host = request.get_host()
-    success_url = f"{scheme}://{host}/billing/success/"
-    cancel_url = f"{scheme}://{host}/billing/cancel/"
+    # Build absolute URLs for success/cancel using SITE_URL
+    site_url = settings.SITE_URL.rstrip("/")
+    success_url = f"{site_url}/billing/success/"
+    cancel_url = f"{site_url}/billing/cancel/"
 
     try:
         # Create or retrieve Stripe Customer

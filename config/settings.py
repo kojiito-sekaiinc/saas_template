@@ -32,6 +32,9 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+# Site URL for absolute URLs (used in Stripe Checkout, emails, etc.)
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
+
 
 # Application definition
 
