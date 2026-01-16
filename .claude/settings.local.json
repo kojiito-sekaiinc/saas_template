@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(django-admin startproject:*)",
+      "Bash(python -m compileall:*)",
+      "Bash(python manage.py check:*)",
+      "Bash(python manage.py migrate:*)",
+      "Bash(timeout:*)",
+      "Bash(python manage.py makemigrations:*)"
+    ]
+  }
+}

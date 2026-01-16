@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - SaaS Template{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>Sign Up</h1>
+
+    {% if form.non_field_errors %}
+    <div class="error-message">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="form-group">
+            {{ form.email }}
+            {% if form.email.errors %}
+            <span class="field-error">{{ form.email.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password }}
+            {% if form.password.errors %}
+            <span class="field-error">{{ form.password.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password_confirm }}
+            {% if form.password_confirm.errors %}
+            <span class="field-error">{{ form.password_confirm.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+    </form>
+
+    <p class="auth-link">Already have an account? <a href="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Log in</a></p>
+</div>
+{% endblock %}
