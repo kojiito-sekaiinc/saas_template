@@ -13,7 +13,7 @@ class PaywallMiddleware:
     - Not logged in → redirect to login with next
     - Logged in:
       - now <= Profile.free_until → allow
-      - BillingProfile.status == "active" → allow
+      - BillingProfile.status in ("active", "trialing") → allow
       - otherwise → redirect to /billing/pricing/
     """
 
@@ -65,9 +65,9 @@ class PaywallMiddleware:
 
         BillingProfile is expected to have:
         - status field (string)
-        - "active" meaning paid and current
+        - "active" or "trialing" grants access
         """
         billing_profile = getattr(user, "billing_profile", None)
         if not billing_profile:
             return False
-        return getattr(billing_profile, "status", None) == "active"
+        return getattr(billing_profile, "status", None) in ("active", "trialing")

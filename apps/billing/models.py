@@ -7,10 +7,12 @@ class BillingProfile(models.Model):
 
     STATUS_CHOICES = [
         ("active", "Active"),
+        ("trialing", "Trialing"),
         ("canceled", "Canceled"),
         ("past_due", "Past Due"),
         ("unpaid", "Unpaid"),
         ("incomplete", "Incomplete"),
+        ("incomplete_expired", "Incomplete Expired"),
     ]
 
     user = models.OneToOneField(
@@ -33,5 +35,5 @@ class BillingProfile(models.Model):
 
     @property
     def is_active(self):
-        """Check if subscription is active."""
-        return self.status == "active"
+        """Check if subscription is active or trialing."""
+        return self.status in ("active", "trialing")
