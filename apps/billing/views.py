@@ -131,6 +131,15 @@ def _handle_subscription_event(subscription):
     status = subscription["status"]
     current_period_end_ts = subscription.get("current_period_end")
 
+    # Verify this subscription belongs to our product (Price ID check)
+    expected_price_id = os.environ.get("STRIPE_PRICE_ID", "")
+    if not _is_valid_subscription(subscription, expected_price_id):
+        logger.info(
+            f"Ignoring subscription {stripe_subscription_id} - "
+            f"does not match expected price ID"
+        )
+        return
+
     # Convert timestamp to datetime
     current_period_end = None
     if current_period_end_ts:
@@ -182,3 +191,22 @@ def _find_user_for_subscription(subscription, stripe_customer_id):
         pass
 
     return None
+
+
+def _is_valid_subscription(subscription, expected_price_id):
+    """
+    Verify that subscription contains the expected price ID.
+
+    Returns True if any of the subscription items matches expected_price_id.
+    """
+    if not expected_price_id:
+        logger.warning("STRIPE_PRICE_ID not configured - skipping price validation")
+        return True
+
+    items = subscription.get("items", {}).get("data", [])
+    for item in items:
+        price = item.get("price", {})
+        if price.get("id") == expected_price_id:
+            return True
+
+    return False
