@@ -1,5 +1,10 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.utils import timezone
+
+FREE_TRIAL_DAYS = 7
 
 
 class UserManager(BaseUserManager):
@@ -44,3 +49,35 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def get_or_create_profile(self):
+        """Get or lazily create the user's profile."""
+        profile, _ = Profile.objects.get_or_create(
+            user=self,
+            defaults={"free_until": timezone.now() + timedelta(days=FREE_TRIAL_DAYS)},
+        )
+        return profile
+
+
+class Profile(models.Model):
+    """User profile with subscription and trial information."""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    free_until = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "profiles"
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
+
+    @property
+    def is_in_free_trial(self):
+        """Check if user is still in free trial period."""
+        return timezone.now() <= self.free_until

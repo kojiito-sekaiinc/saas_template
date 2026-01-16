@@ -25,6 +25,7 @@ def signup_view(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.get_or_create_profile()
             login(request, user)
             return redirect(next_url)
     else:
