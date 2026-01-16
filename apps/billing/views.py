@@ -92,6 +92,38 @@ def cancel(request):
     return render(request, "billing/cancel.html")
 
 
+@login_required
+def portal(request):
+    """Redirect user to Stripe Customer Portal for subscription management."""
+    # Configure Stripe API key
+    stripe_secret_key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if not stripe_secret_key:
+        return HttpResponse("Stripe is not configured", status=500)
+    stripe.api_key = stripe_secret_key
+
+    # Get BillingProfile with stripe_customer_id
+    try:
+        billing_profile = BillingProfile.objects.get(user=request.user)
+    except BillingProfile.DoesNotExist:
+        return redirect("billing:pricing")
+
+    if not billing_profile.stripe_customer_id:
+        return redirect("billing:pricing")
+
+    # Build return URL
+    site_url = settings.SITE_URL.rstrip("/")
+    return_url = f"{site_url}/billing/pricing/"
+
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=billing_profile.stripe_customer_id,
+            return_url=return_url,
+        )
+        return redirect(session.url)
+    except stripe.error.StripeError as e:
+        return HttpResponse(f"Stripe error: {e}", status=500)
+
+
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):
