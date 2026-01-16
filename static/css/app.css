@@ -175,3 +175,75 @@ body {
 .auth-link a {
     color: #333;
 }
+
+/* Pricing page */
+.pricing {
+    text-align: center;
+}
+
+.pricing h1 {
+    margin-bottom: 2rem;
+}
+
+.pricing-card {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.pricing-card h2 {
+    margin-bottom: 1rem;
+}
+
+.pricing-price {
+    margin-bottom: 1.5rem;
+}
+
+.price-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.price-period {
+    font-size: 1rem;
+    color: #666;
+}
+
+.pricing-features {
+    list-style: none;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.pricing-features li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.pricing-features li:last-child {
+    border-bottom: none;
+}
+
+/* Billing result pages */
+.billing-result {
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.billing-result h1 {
+    margin-bottom: 1rem;
+}
+
+.billing-result p {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.billing-result .btn {
+    margin-top: 2rem;
+    display: inline-block;
+    text-decoration: none;
+}
