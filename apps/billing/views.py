@@ -16,8 +16,6 @@ from .models import BillingProfile
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
-
 
 def pricing(request):
     """Pricing page showing subscription plan."""
@@ -32,8 +30,13 @@ def pricing(request):
 @require_POST
 def checkout(request):
     """Create Stripe Checkout Session for subscription."""
-    price_id = os.environ.get("STRIPE_PRICE_ID", "")
+    # Configure Stripe API key
+    stripe_secret_key = os.environ.get("STRIPE_SECRET_KEY", "")
+    if not stripe_secret_key:
+        return HttpResponse("Stripe is not configured", status=500)
+    stripe.api_key = stripe_secret_key
 
+    price_id = os.environ.get("STRIPE_PRICE_ID", "")
     if not price_id:
         return HttpResponse("Stripe is not configured", status=500)
 
