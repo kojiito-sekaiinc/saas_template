@@ -4,16 +4,16 @@ from datetime import datetime, timezone as dt_timezone
 
 import stripe
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from apps.accounts.models import User
-
 from .models import BillingProfile
 
+User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
