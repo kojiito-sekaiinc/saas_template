@@ -1,8 +1,8 @@
-# SaaS Template
+# Django SaaS Subscription Template
 
-A reusable Django template for building SaaS applications.
-
-This template is designed for rapid SaaS development with a fixed technology stack and subscription-based billing.
+A production-ready Django template for building subscription-based SaaS in days, not weeks.  
+Includes email-based authentication, 7-day free trial, Stripe subscriptions, secure webhooks, and Customer Portal.  
+Designed for fast iteration, safe monetization, and service-by-service SaaS launch.
 
 ## Technology Stack
 
