@@ -169,4 +169,8 @@
 - `apps/billing/models.py`（BillingProfile）
 - `.env`（Stripe関連）
 
+## 7. セキュリティ関連の補足
+- DEBUG=False にすると HTTPS 強制 & HSTS 有効になる
+- Railway 本番は必ず https で公開する前提であること
+
 変更する場合は、同時にこのRUNBOOKも更新すること。
