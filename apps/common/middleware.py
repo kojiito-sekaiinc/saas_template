@@ -68,11 +68,10 @@ class PaywallMiddleware:
         """
         Check if user has active subscription.
 
-        BillingProfile is expected to have:
-        - status field (string)
-        - "active" or "trialing" grants access
+        NOTE:
+        - Only 'active' grants paid access (see CLAUDE.md Section 6).
         """
         billing_profile = getattr(user, "billing_profile", None)
         if not billing_profile:
             return False
-        return getattr(billing_profile, "status", None) in ("active", "trialing")
+        return billing_profile.is_active

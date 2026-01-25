@@ -35,5 +35,6 @@ class BillingProfile(models.Model):
 
     @property
     def is_active(self):
-        """Check if subscription is active or trialing."""
-        return self.status in ("active", "trialing")
+        """Check if subscription grants paid access (CLAUDE.md Section 6)."""
+        # Only 'active' grants paid access. 'trialing' is NOT treated as paid.
+        return self.status == "active"
