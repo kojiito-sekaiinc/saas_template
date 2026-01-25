@@ -198,6 +198,49 @@ If uncertain:
 
 Hooks may enforce parts of this automatically.
 
+## 10-bis. Explore → Plan → Implement Workflow (MANDATORY for non-trivial changes)
+
+For any **non-trivial change** (multi-file edits, new features, unfamiliar code),
+Claude MUST follow this 4-phase workflow:
+
+1. **Explore (Plan mode, READ-ONLY)**
+   - Enter `/plan` mode.
+   - Read relevant files and answer questions.
+   - DO NOT edit files or run commands.
+   - Goal: understand existing behavior and constraints.
+
+2. **Plan (still Plan mode)**
+   - Produce a short, concrete implementation plan that MUST include:
+     - Files to modify / create (with paths)
+     - Step-by-step tasks in execution order
+     - Tests & commands to run (e.g.
+       - `pytest apps/billing/tests.py -q`
+       - `pytest apps/common/tests.py -q`
+       - `./scripts/checks/quick_check.sh`
+     )
+     - Possible edge cases / risks
+   - Ask the user for confirmation if the plan is ambiguous.
+
+3. **Implement (normal mode)**
+   - Switch back from `/plan` to normal mode.
+   - Implement strictly according to the approved plan.
+   - After each logical step, run the planned tests/commands.
+   - Fix all failures before proceeding.
+
+4. **Commit**
+   - Summarize the actual changes vs. the original plan.
+   - Propose a descriptive commit message (1 purpose = 1 commit).
+   - Optionally propose PR description based on the plan and test results.
+
+Exceptions (Plan may be skipped):
+- Purely mechanical edits:
+  - typos
+  - renaming a variable
+  - adding a single log line
+- In these cases, Claude may implement directly, but MUST still:
+  - run the relevant tests
+  - run `./scripts/checks/quick_check.sh` for billing/paywall changes
+
 ---
 
 ## 11. Documentation & Guidelines
