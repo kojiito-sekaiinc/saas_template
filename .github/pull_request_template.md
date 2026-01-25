@@ -51,6 +51,7 @@
 - [ ] `status == active` のみが有料アクセス条件になっている
 - [ ] Stripe trial 機能を使用していない
 - [ ] 価格・プランは単一（月980円）のまま
+- [ ] Webhook / Billing / Paywall に関する変更がある場合、RUNBOOK.md を更新した
 
 ---
 

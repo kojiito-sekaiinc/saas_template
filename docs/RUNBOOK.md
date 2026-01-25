@@ -51,7 +51,10 @@
 
 3) **アプリ側ログ**
 - `stripe_webhook` の受信ログ（署名エラー/400/500 など）
+- ★ `Stripe webhook received: event_id=... , type=...` が出ているか（Webhookがアプリに到達しているかの一次確認）
+- ★ `BillingProfile updated from Stripe webhook` が出ているか（DB更新が行われたか）
 - `Ignoring subscription ... does not match expected price ID` が出ていないか
+- Webhook調査時は、ログに出力される `event_id` をキーに Stripe Dashboard の Webhook Logs と突合する
 
 ---
 

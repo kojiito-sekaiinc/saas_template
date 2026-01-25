@@ -16,9 +16,15 @@ from .models import BillingProfile
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+# Stripe configuration (loaded once at import time)
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
+
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+
 
 def pricing(request):
-    """Pricing page showing subscription plan."""
     context = {
         "price": 980,
         "currency": "JPY",
@@ -29,27 +35,16 @@ def pricing(request):
 @login_required
 @require_POST
 def checkout(request):
-    """Create Stripe Checkout Session for subscription."""
-    # Configure Stripe API key
-    stripe_secret_key = os.environ.get("STRIPE_SECRET_KEY", "")
-    if not stripe_secret_key:
-        return HttpResponse("Stripe is not configured", status=500)
-    stripe.api_key = stripe_secret_key
-
-    price_id = os.environ.get("STRIPE_PRICE_ID", "")
-    if not price_id:
+    if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
         return HttpResponse("Stripe is not configured", status=500)
 
-    # Get or create BillingProfile
     billing_profile, _ = BillingProfile.objects.get_or_create(user=request.user)
 
-    # Build absolute URLs for success/cancel using SITE_URL
     site_url = settings.SITE_URL.rstrip("/")
     success_url = f"{site_url}/billing/success/"
     cancel_url = f"{site_url}/billing/cancel/"
 
     try:
-        # Create or retrieve Stripe Customer
         if billing_profile.stripe_customer_id:
             customer_id = billing_profile.stripe_customer_id
         else:
@@ -61,13 +56,12 @@ def checkout(request):
             billing_profile.save()
             customer_id = customer.id
 
-        # Create Checkout Session
         session = stripe.checkout.Session.create(
             customer=customer_id,
             mode="subscription",
             line_items=[
                 {
-                    "price": price_id,
+                    "price": STRIPE_PRICE_ID,
                     "quantity": 1,
                 }
             ],
@@ -79,29 +73,15 @@ def checkout(request):
         return redirect(session.url)
 
     except stripe.error.StripeError as e:
+        logger.error(f"Stripe Checkout error: {e}")
         return HttpResponse(f"Stripe error: {e}", status=500)
-
-
-def success(request):
-    """Checkout success page (informational only)."""
-    return render(request, "billing/success.html")
-
-
-def cancel(request):
-    """Checkout cancel page (informational only)."""
-    return render(request, "billing/cancel.html")
 
 
 @login_required
 def portal(request):
-    """Redirect user to Stripe Customer Portal for subscription management."""
-    # Configure Stripe API key
-    stripe_secret_key = os.environ.get("STRIPE_SECRET_KEY", "")
-    if not stripe_secret_key:
+    if not STRIPE_SECRET_KEY:
         return HttpResponse("Stripe is not configured", status=500)
-    stripe.api_key = stripe_secret_key
 
-    # Get BillingProfile with stripe_customer_id
     try:
         billing_profile = BillingProfile.objects.get(user=request.user)
     except BillingProfile.DoesNotExist:
@@ -110,7 +90,6 @@ def portal(request):
     if not billing_profile.stripe_customer_id:
         return redirect("billing:pricing")
 
-    # Build return URL
     site_url = settings.SITE_URL.rstrip("/")
     return_url = f"{site_url}/billing/pricing/"
 
@@ -121,6 +100,7 @@ def portal(request):
         )
         return redirect(session.url)
     except stripe.error.StripeError as e:
+        logger.error(f"Stripe portal error: {e}")
         return HttpResponse(f"Stripe error: {e}", status=500)
 
 
@@ -132,7 +112,6 @@ def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
 
-    # Verify webhook signature
     if not webhook_secret:
         logger.error("STRIPE_WEBHOOK_SECRET not configured")
         return HttpResponse("Webhook secret not configured", status=500)
@@ -140,58 +119,58 @@ def stripe_webhook(request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
     except ValueError:
-        logger.warning("Invalid webhook payload")
+        logger.warning("Stripe webhook: invalid payload")
         return HttpResponse("Invalid payload", status=400)
     except stripe.error.SignatureVerificationError:
-        logger.warning("Invalid webhook signature")
+        logger.warning("Stripe webhook: invalid signature")
         return HttpResponse("Invalid signature", status=400)
 
-    # Handle subscription events
-    event_type = event["type"]
+    event_id = event.get("id")
+    event_type = event.get("type")
+
+    logger.info(
+        f"Stripe webhook received: event_id={event_id}, type={event_type}"
+    )
+
     if event_type in (
         "customer.subscription.created",
         "customer.subscription.updated",
         "customer.subscription.deleted",
     ):
         subscription = event["data"]["object"]
-        _handle_subscription_event(subscription)
+        _handle_subscription_event(subscription, event_id)
 
     return HttpResponse(status=200)
 
 
-def _handle_subscription_event(subscription):
-    """Process subscription event and update BillingProfile."""
+def _handle_subscription_event(subscription, event_id: str | None):
     stripe_subscription_id = subscription["id"]
     stripe_customer_id = subscription["customer"]
     status = subscription["status"]
     current_period_end_ts = subscription.get("current_period_end")
 
-    # Verify this subscription belongs to our product (Price ID check)
-    expected_price_id = os.environ.get("STRIPE_PRICE_ID", "")
-    if not _is_valid_subscription(subscription, expected_price_id):
+    if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):
         logger.info(
-            f"Ignoring subscription {stripe_subscription_id} - "
-            f"does not match expected price ID"
+            "Stripe subscription ignored (price mismatch): "
+            f"event_id={event_id}, subscription_id={stripe_subscription_id}"
         )
         return
 
-    # Convert timestamp to datetime
     current_period_end = None
     if current_period_end_ts:
         current_period_end = datetime.fromtimestamp(
             current_period_end_ts, tz=dt_timezone.utc
         )
 
-    # Find user by metadata.user_id or stripe_customer_id
     user = _find_user_for_subscription(subscription, stripe_customer_id)
     if not user:
         logger.warning(
-            f"No user found for subscription {stripe_subscription_id}, "
-            f"customer {stripe_customer_id}"
+            "Stripe subscription received but no user found: "
+            f"event_id={event_id}, subscription_id={stripe_subscription_id}, "
+            f"customer_id={stripe_customer_id}"
         )
         return
 
-    # Get or create BillingProfile and update (idempotent)
     billing_profile, _ = BillingProfile.objects.get_or_create(user=user)
     billing_profile.stripe_customer_id = stripe_customer_id
     billing_profile.stripe_subscription_id = stripe_subscription_id
@@ -200,40 +179,32 @@ def _handle_subscription_event(subscription):
     billing_profile.save()
 
     logger.info(
-        f"Updated BillingProfile for user {user.id}: status={status}, "
-        f"subscription={stripe_subscription_id}"
+        "BillingProfile updated from Stripe webhook: "
+        f"event_id={event_id}, user_id={user.id}, "
+        f"subscription_id={stripe_subscription_id}, status={status}"
     )
 
 
 def _find_user_for_subscription(subscription, stripe_customer_id):
-    """Find user by metadata.user_id or stripe_customer_id."""
-    # Try metadata.user_id first
     metadata = subscription.get("metadata", {})
     user_id = metadata.get("user_id")
+
     if user_id:
         try:
             return User.objects.get(id=int(user_id))
         except (User.DoesNotExist, ValueError):
             pass
 
-    # Fallback to stripe_customer_id
     try:
         billing_profile = BillingProfile.objects.get(
             stripe_customer_id=stripe_customer_id
         )
         return billing_profile.user
     except BillingProfile.DoesNotExist:
-        pass
-
-    return None
+        return None
 
 
 def _is_valid_subscription(subscription, expected_price_id):
-    """
-    Verify that subscription contains the expected price ID.
-
-    Returns True if any of the subscription items matches expected_price_id.
-    """
     if not expected_price_id:
         logger.warning("STRIPE_PRICE_ID not configured - skipping price validation")
         return True
