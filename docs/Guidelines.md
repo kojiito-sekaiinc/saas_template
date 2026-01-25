@@ -196,5 +196,20 @@ These guidelines exist to:
 - Prevent expensive mistakes
 - Enable fast, confident iteration
 
+
+## Validation Rules (Mandatory)
+
+- Any change to billing logic MUST pass:
+  - pytest apps/billing/tests.py -q
+  - ./scripts/checks/quick_check.sh
+
+- Billing state MUST be derived ONLY from Stripe Webhook events.
+- Never infer subscription state from frontend redirects.
+
+- Billing や paywall に変更を加えた場合は、必ず以下を実行すること:
+  - pytest apps/billing/tests.py -q
+  - pytest apps/common/tests.py -q
+  - ./scripts/checks/quick_check.sh
+
 When in doubt:
 > **Choose safety and simplicity over speed.**

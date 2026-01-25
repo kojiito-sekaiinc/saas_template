@@ -234,6 +234,9 @@ Before completing any task, you MUST verify:
 
 ---
 
+- Development environment assumes Python 3.11+
+- Do not upgrade Python without running full test suite
+
 - This repository is a TEMPLATE. Modify only apps/app for new services.
 - Do not change billing or paywall logic unless absolutely necessary.
 - If unsure, prefer deletion over addition.

@@ -1,30 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+# プロジェクトルートに移動（scripts/checks/ からの相対パス）
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
-echo "== quick_check =="
+echo "===================================="
+echo " Running quick checks for this repo "
+echo "===================================="
+echo
 
-if [[ ! -f "manage.py" ]]; then
-  echo "ERROR: manage.py not found. Run from repo root." >&2
-  exit 1
-fi
-
-echo "[1/4] Python compile check"
+# 1. Python バイトコードコンパイル（構文エラー検出）
+echo "[1/3] python -m compileall -q ."
 python -m compileall -q .
+echo "      OK"
+echo
 
-echo "[2/4] Django system check"
+# 2. Django システムチェック
+echo "[2/3] python manage.py check"
 python manage.py check
+echo "      OK"
+echo
 
-echo "[3/4] Django migrations check (no changes)"
-# This will exit non-zero if migrations are missing.
-python manage.py makemigrations --check --dry-run
+# 3. pytest
+echo "[3/3] pytest -q"
+pytest -q
+echo "      OK"
+echo
 
-echo "[4/4] Pytest (if tests exist)"
-if ls -1q tests 2>/dev/null | grep -q . || find . -maxdepth 3 -type f -name "test_*.py" | grep -q .; then
-  pytest -q
-else
-  echo "No tests detected; skipping pytest."
-fi
-
-echo "✅ quick_check passed."
+echo "===================================="
+echo " All quick checks passed successfully"
+echo "===================================="

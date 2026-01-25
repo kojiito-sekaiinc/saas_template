@@ -13,6 +13,12 @@ Designed for fast iteration, safe monetization, and service-by-service SaaS laun
 - **Deployment**: Railway
 - **Static Files**: WhiteNoise
 
+## Runtime
+
+- Python 3.11.x (recommended)
+- Python 3.12.x (supported)
+- Python 3.14 is NOT supported (Django compatibility issue)
+
 ## Local Setup
 
 1. Create a virtual environment:

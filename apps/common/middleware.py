@@ -56,7 +56,12 @@ class PaywallMiddleware:
 
     def _is_in_free_trial(self, user):
         """Check if user is in free trial period."""
-        profile = user.get_or_create_profile()
+        # user.get_or_create_profile() に依存すると AnonymousUser などで壊れやすいので、
+        # 素直に profile プロパティを見る。
+        profile = getattr(user, "profile", None)
+        if not profile or not getattr(profile, "free_until", None):
+            return False
+
         return timezone.now() <= profile.free_until
 
     def _has_active_subscription(self, user):

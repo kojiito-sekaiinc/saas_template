@@ -163,14 +163,22 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # WhiteNoise configuration
+# 開発・テスト: manifest なし (CompressedStaticFilesStorage)
+# 本番: 環境変数で manifest を有効化する
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
+
+# 本番で manifest を使いたい場合だけ、環境変数で上書き
+if os.environ.get("DJANGO_STATICFILES_MANIFEST", "0") == "1":
+    STORAGES["staticfiles"]["BACKEND"] = (
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    )
 
 
 # Default primary key field type
