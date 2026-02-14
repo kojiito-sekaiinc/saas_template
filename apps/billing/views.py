@@ -72,7 +72,7 @@ def checkout(request):
 
         return redirect(session.url)
 
-    except stripe.error.StripeError as e:
+    except stripe.StripeError as e:
         logger.error(f"Stripe Checkout error: {e}")
         return HttpResponse("An error occurred. Please try again later.", status=500)
 
@@ -109,7 +109,7 @@ def portal(request):
             return_url=return_url,
         )
         return redirect(session.url)
-    except stripe.error.StripeError as e:
+    except stripe.StripeError as e:
         logger.error(f"Stripe portal error: {e}")
         return HttpResponse("An error occurred. Please try again later.", status=500)
 
@@ -131,7 +131,7 @@ def stripe_webhook(request):
     except ValueError:
         logger.warning("Stripe webhook: invalid payload")
         return HttpResponse("Invalid payload", status=400)
-    except stripe.error.SignatureVerificationError:
+    except stripe.SignatureVerificationError:
         logger.warning("Stripe webhook: invalid signature")
         return HttpResponse("Invalid signature", status=400)
 
