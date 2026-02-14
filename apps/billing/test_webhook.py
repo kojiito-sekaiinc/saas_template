@@ -1,4 +1,4 @@
-# apps/billing/tests_webhook.py
+# apps/billing/test_webhook.py
 
 import json
 import time
@@ -42,6 +42,7 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -53,7 +54,7 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
     # apps.billing.views ロガーの INFO を caplog で捕まえる
     with caplog.at_level("INFO", logger="apps.billing.views"):
         response = client.post(
-            "/stripe/webhook",  # URLパターンに合わせて必要なら調整
+            "/stripe/webhook/",  # URLパターンに合わせて必要なら調整
             data=json.dumps({}),
             content_type="application/json",
             HTTP_STRIPE_SIGNATURE="test-signature",

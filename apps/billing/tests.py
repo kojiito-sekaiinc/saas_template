@@ -58,7 +58,7 @@ def user():
 @pytest.mark.django_db
 def test_handle_subscription_created_active_marks_profile_active(user, monkeypatch):
     # 環境変数 STRIPE_PRICE_ID をセット（_is_valid_subscription 用）
-    monkeypatch.setenv("STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
     subscription = _build_subscription_payload(
         user_id=user.id,
@@ -68,7 +68,7 @@ def test_handle_subscription_created_active_marks_profile_active(user, monkeypat
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription)
+    _handle_subscription_event(subscription, "evt_test_123")
 
     bp = BillingProfile.objects.get(user=user)
     assert bp.stripe_customer_id == "cus_created_123"
@@ -84,7 +84,7 @@ def test_handle_subscription_created_active_marks_profile_active(user, monkeypat
 
 @pytest.mark.django_db
 def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, monkeypatch):
-    monkeypatch.setenv("STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
     # まず active 状態の BillingProfile を用意
     bp = BillingProfile.objects.create(
@@ -102,7 +102,7 @@ def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, mo
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription)
+    _handle_subscription_event(subscription, "evt_test_123")
 
     bp.refresh_from_db()
     assert bp.status == "canceled"
@@ -115,7 +115,7 @@ def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, mo
 
 @pytest.mark.django_db
 def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
-    monkeypatch.setenv("STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
     bp = BillingProfile.objects.create(
         user=user,
@@ -132,7 +132,7 @@ def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription)
+    _handle_subscription_event(subscription, "evt_test_123")
 
     bp.refresh_from_db()
     assert bp.status == "canceled"
@@ -145,7 +145,7 @@ def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
 
 @pytest.mark.django_db
 def test_handle_subscription_is_idempotent_for_same_subscription(user, monkeypatch):
-    monkeypatch.setenv("STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
     subscription = _build_subscription_payload(
         user_id=user.id,
@@ -156,9 +156,9 @@ def test_handle_subscription_is_idempotent_for_same_subscription(user, monkeypat
     )
 
     # 1回目
-    _handle_subscription_event(subscription)
+    _handle_subscription_event(subscription, "evt_test_123")
     # 2回目（重複）
-    _handle_subscription_event(subscription)
+    _handle_subscription_event(subscription, "evt_test_123")
 
     bp_list = BillingProfile.objects.filter(user=user)
     assert bp_list.count() == 1
