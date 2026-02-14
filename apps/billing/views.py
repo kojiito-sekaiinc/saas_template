@@ -74,7 +74,7 @@ def checkout(request):
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe Checkout error: {e}")
-        return HttpResponse(f"Stripe error: {e}", status=500)
+        return HttpResponse("An error occurred. Please try again later.", status=500)
 
 
 @login_required
@@ -111,7 +111,7 @@ def portal(request):
         return redirect(session.url)
     except stripe.error.StripeError as e:
         logger.error(f"Stripe portal error: {e}")
-        return HttpResponse(f"Stripe error: {e}", status=500)
+        return HttpResponse("An error occurred. Please try again later.", status=500)
 
 
 @csrf_exempt
