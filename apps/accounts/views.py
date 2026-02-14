@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import login, logout
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 from .forms import LoginForm, SignupForm
 
@@ -51,6 +52,7 @@ def login_view(request):
     return render(request, "accounts/login.html", {"form": form, "next": next_url})
 
 
+@require_POST
 def logout_view(request):
     """Handle user logout."""
     logout(request)
