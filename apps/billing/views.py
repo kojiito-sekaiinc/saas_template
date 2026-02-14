@@ -78,6 +78,16 @@ def checkout(request):
 
 
 @login_required
+def success(request):
+    return render(request, "billing/success.html")
+
+
+@login_required
+def cancel(request):
+    return render(request, "billing/cancel.html")
+
+
+@login_required
 def portal(request):
     if not STRIPE_SECRET_KEY:
         return HttpResponse("Stripe is not configured", status=500)
