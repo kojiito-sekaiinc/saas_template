@@ -13,7 +13,7 @@ class PaywallMiddleware:
     - Not logged in → redirect to login with next
     - Logged in:
       - now <= Profile.free_until → allow
-      - BillingProfile.status in ("active", "trialing") → allow
+      - BillingProfile.status == "active" → allow
       - otherwise → redirect to /billing/pricing/
     """
 
