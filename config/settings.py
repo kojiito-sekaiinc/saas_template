@@ -35,6 +35,13 @@ ALLOWED_HOSTS = [
 # Site URL for absolute URLs (used in Stripe Checkout, emails, etc.)
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 
+# CSRF trusted origins (comma-separated, e.g. "https://example.com,https://www.example.com")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 
 # Application definition
 

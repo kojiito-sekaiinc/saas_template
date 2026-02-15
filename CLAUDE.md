@@ -38,9 +38,9 @@ These skills define your **role, mindset, and decision boundaries**.
 You must continuously reference and respect them.
 
 ### Applied Skill Files
-- `skills/django-saas-engineer/Skill.md`
-- `skills/subscription-saas-billing-specialist/Skill.md`
-- `skills/template-oriented-developer/Skill.md`
+- `.claude/skills/django-saas-engineer/SKILL.md`
+- `.claude/skills/subscription-saas-billing-specialist/SKILL.md`
+- `.claude/skills/template-oriented-developer/SKILL.md`
 
 Violation of any skill is considered a violation of this specification.
 
