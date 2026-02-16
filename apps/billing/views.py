@@ -6,12 +6,13 @@ import stripe
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import BillingProfile
+from .models import BillingProfile, ProcessedEvent
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -148,12 +149,15 @@ def stripe_webhook(request):
         "customer.subscription.deleted",
     ):
         subscription = event["data"]["object"]
-        _handle_subscription_event(subscription, event_id)
+        event_created = event.get("created")
+        _handle_subscription_event(subscription, event_id, event_created)
 
     return HttpResponse(status=200)
 
 
-def _handle_subscription_event(subscription, event_id: str | None):
+def _handle_subscription_event(
+    subscription, event_id: str | None, event_created: int | None = None
+):
     stripe_subscription_id = subscription["id"]
     stripe_customer_id = subscription["customer"]
     status = subscription["status"]
@@ -181,12 +185,49 @@ def _handle_subscription_event(subscription, event_id: str | None):
         )
         return
 
-    billing_profile, _ = BillingProfile.objects.get_or_create(user=user)
-    billing_profile.stripe_customer_id = stripe_customer_id
-    billing_profile.stripe_subscription_id = stripe_subscription_id
-    billing_profile.status = status
-    billing_profile.current_period_end = current_period_end
-    billing_profile.save()
+    try:
+        with transaction.atomic():
+            # Deduplication: reject already-processed events
+            if event_id:
+                try:
+                    ProcessedEvent.objects.create(event_id=event_id)
+                except IntegrityError:
+                    logger.info(
+                        f"Duplicate Stripe event skipped: event_id={event_id}"
+                    )
+                    return
+
+            billing_profile, _ = BillingProfile.objects.get_or_create(user=user)
+            billing_profile = (
+                BillingProfile.objects.select_for_update().get(pk=billing_profile.pk)
+            )
+
+            # Out-of-order guard: skip if event is older than last processed
+            if (
+                event_created is not None
+                and billing_profile.last_stripe_event_created is not None
+                and event_created < billing_profile.last_stripe_event_created
+            ):
+                logger.info(
+                    "Out-of-order Stripe event skipped: "
+                    f"event_id={event_id}, event_created={event_created}, "
+                    f"last={billing_profile.last_stripe_event_created}"
+                )
+                return
+
+            billing_profile.stripe_customer_id = stripe_customer_id
+            billing_profile.stripe_subscription_id = stripe_subscription_id
+            billing_profile.status = status
+            billing_profile.current_period_end = current_period_end
+            if event_created is not None:
+                billing_profile.last_stripe_event_created = event_created
+            billing_profile.save()
+
+    except IntegrityError:
+        logger.warning(
+            f"Unexpected IntegrityError for event_id={event_id}"
+        )
+        return
 
     logger.info(
         "BillingProfile updated from Stripe webhook: "

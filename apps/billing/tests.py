@@ -5,7 +5,7 @@ import time
 import pytest
 from django.contrib.auth import get_user_model
 
-from apps.billing.models import BillingProfile
+from apps.billing.models import BillingProfile, ProcessedEvent
 from apps.billing.views import _handle_subscription_event
 
 User = get_user_model()
@@ -57,7 +57,6 @@ def user():
 
 @pytest.mark.django_db
 def test_handle_subscription_created_active_marks_profile_active(user, monkeypatch):
-    # 環境変数 STRIPE_PRICE_ID をセット（_is_valid_subscription 用）
     monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
     subscription = _build_subscription_payload(
@@ -68,7 +67,7 @@ def test_handle_subscription_created_active_marks_profile_active(user, monkeypat
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription, "evt_test_123")
+    _handle_subscription_event(subscription, "evt_test_001", int(time.time()))
 
     bp = BillingProfile.objects.get(user=user)
     assert bp.stripe_customer_id == "cus_created_123"
@@ -86,7 +85,6 @@ def test_handle_subscription_created_active_marks_profile_active(user, monkeypat
 def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, monkeypatch):
     monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
-    # まず active 状態の BillingProfile を用意
     bp = BillingProfile.objects.create(
         user=user,
         stripe_customer_id="cus_update_123",
@@ -102,7 +100,7 @@ def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, mo
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription, "evt_test_123")
+    _handle_subscription_event(subscription, "evt_test_002", int(time.time()))
 
     bp.refresh_from_db()
     assert bp.status == "canceled"
@@ -126,13 +124,13 @@ def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
 
     subscription = _build_subscription_payload(
         user_id=user.id,
-        status="canceled",  # deleted イベントでも status は canceled などになる
+        status="canceled",
         subscription_id="sub_delete_123",
         customer_id="cus_delete_123",
         price_id="price_test_123",
     )
 
-    _handle_subscription_event(subscription, "evt_test_123")
+    _handle_subscription_event(subscription, "evt_test_003", int(time.time()))
 
     bp.refresh_from_db()
     assert bp.status == "canceled"
@@ -140,33 +138,81 @@ def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
 
 
 # ====================================================
-# 4. 同じ subscription を2回処理しても壊れない（冪等性）
+# 4. 同じ event_id を2回処理 → 重複排除（冪等性）
 # ====================================================
 
 @pytest.mark.django_db
-def test_handle_subscription_is_idempotent_for_same_subscription(user, monkeypatch):
+def test_duplicate_event_id_is_rejected(user, monkeypatch):
     monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
 
-    subscription = _build_subscription_payload(
+    # 1回目: active で処理
+    sub_active = _build_subscription_payload(
         user_id=user.id,
         status="active",
-        subscription_id="sub_repeat_123",
-        customer_id="cus_repeat_123",
+        subscription_id="sub_dup_123",
+        customer_id="cus_dup_123",
         price_id="price_test_123",
     )
+    _handle_subscription_event(sub_active, "evt_dup_001", int(time.time()))
 
-    # 1回目
-    _handle_subscription_event(subscription, "evt_test_123")
-    # 2回目（重複）
-    _handle_subscription_event(subscription, "evt_test_123")
-
-    bp_list = BillingProfile.objects.filter(user=user)
-    assert bp_list.count() == 1
-
-    bp = bp_list.first()
-    assert bp.stripe_subscription_id == "sub_repeat_123"
+    bp = BillingProfile.objects.get(user=user)
     assert bp.status == "active"
-    assert bp.is_active is True
+
+    # 2回目: 同じ event_id で canceled を送信（重複なのでスキップされるべき）
+    sub_canceled = _build_subscription_payload(
+        user_id=user.id,
+        status="canceled",
+        subscription_id="sub_dup_123",
+        customer_id="cus_dup_123",
+        price_id="price_test_123",
+    )
+    _handle_subscription_event(sub_canceled, "evt_dup_001", int(time.time()))
+
+    # ProcessedEvent は1件のみ
+    assert ProcessedEvent.objects.filter(event_id="evt_dup_001").count() == 1
+
+    # BillingProfile は active のまま（2回目は無視）
+    bp.refresh_from_db()
+    assert bp.status == "active"
+
+
+# ====================================================
+# 5. 順不同ガード: 古いイベントで上書きされない
+# ====================================================
+
+@pytest.mark.django_db
+def test_out_of_order_event_does_not_overwrite(user, monkeypatch):
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+
+    # 新しいイベント (event_created=2000): canceled
+    sub_new = _build_subscription_payload(
+        user_id=user.id,
+        status="canceled",
+        subscription_id="sub_ooo_123",
+        customer_id="cus_ooo_123",
+        price_id="price_test_123",
+    )
+    _handle_subscription_event(sub_new, "evt_ooo_002", 2000)
+
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.status == "canceled"
+    assert bp.last_stripe_event_created == 2000
+
+    # 古いイベント (event_created=1000): active（遅延到着）
+    sub_old = _build_subscription_payload(
+        user_id=user.id,
+        status="active",
+        subscription_id="sub_ooo_123",
+        customer_id="cus_ooo_123",
+        price_id="price_test_123",
+    )
+    _handle_subscription_event(sub_old, "evt_ooo_001", 1000)
+
+    # status は canceled のまま（古いイベントは無視）
+    bp.refresh_from_db()
+    assert bp.status == "canceled"
+    assert bp.is_active is False
+    assert bp.last_stripe_event_created == 2000
 
 
 # 動作確認用・お守り的なテスト（残しておいてOK）

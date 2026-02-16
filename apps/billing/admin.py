@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BillingProfile
+from .models import BillingProfile, ProcessedEvent
 
 
 @admin.register(BillingProfile)
@@ -10,3 +10,9 @@ class BillingProfileAdmin(admin.ModelAdmin):
     search_fields = ("user__email", "stripe_customer_id", "stripe_subscription_id")
     readonly_fields = ("created_at", "updated_at")
     raw_id_fields = ("user",)
+
+
+@admin.register(ProcessedEvent)
+class ProcessedEventAdmin(admin.ModelAdmin):
+    list_display = ("event_id", "created_at")
+    search_fields = ("event_id",)

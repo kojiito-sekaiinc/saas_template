@@ -2,6 +2,19 @@ from django.conf import settings
 from django.db import models
 
 
+class ProcessedEvent(models.Model):
+    """Processed Stripe event log for deduplication."""
+
+    event_id = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "billing_processed_events"
+
+    def __str__(self):
+        return self.event_id
+
+
 class BillingProfile(models.Model):
     """User billing profile for Stripe subscription management."""
 
@@ -26,6 +39,7 @@ class BillingProfile(models.Model):
     current_period_end = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_stripe_event_created = models.BigIntegerField(null=True, blank=True)
 
     class Meta:
         db_table = "billing_profiles"
