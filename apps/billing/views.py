@@ -257,8 +257,8 @@ def _find_user_for_subscription(subscription, stripe_customer_id):
 
 def _is_valid_subscription(subscription, expected_price_id):
     if not expected_price_id:
-        logger.warning("STRIPE_PRICE_ID not configured - skipping price validation")
-        return True
+        logger.error("STRIPE_PRICE_ID not configured - rejecting event (fail-closed)")
+        return False
 
     items = subscription.get("items", {}).get("data", [])
     for item in items:
