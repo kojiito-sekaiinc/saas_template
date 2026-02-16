@@ -33,8 +33,12 @@ class BillingProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="billing_profile",
     )
-    stripe_customer_id = models.CharField(max_length=255, blank=True)
-    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    stripe_customer_id = models.CharField(
+        max_length=255, blank=True, null=True, unique=True, default=None
+    )
+    stripe_subscription_id = models.CharField(
+        max_length=255, blank=True, null=True, unique=True, default=None
+    )
     status = models.CharField(max_length=20, blank=True, choices=STATUS_CHOICES)
     current_period_end = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

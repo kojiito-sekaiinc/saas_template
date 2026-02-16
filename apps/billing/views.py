@@ -253,6 +253,13 @@ def _find_user_for_subscription(subscription, stripe_customer_id):
         return billing_profile.user
     except BillingProfile.DoesNotExist:
         return None
+    except BillingProfile.MultipleObjectsReturned:
+        logger.error(
+            "Multiple BillingProfiles found for stripe_customer_id=%s "
+            "(data integrity issue - returning None for safety)",
+            stripe_customer_id,
+        )
+        return None
 
 
 def _is_valid_subscription(subscription, expected_price_id):

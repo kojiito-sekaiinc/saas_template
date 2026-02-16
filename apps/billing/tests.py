@@ -215,6 +215,44 @@ def test_out_of_order_event_does_not_overwrite(user, monkeypatch):
     assert bp.last_stripe_event_created == 2000
 
 
+# ====================================================
+# 6. MultipleObjectsReturned で fail-closed（None返却）
+# ====================================================
+
+@pytest.mark.django_db
+def test_multiple_objects_returned_is_handled_safely(user, monkeypatch):
+    """stripe_customer_id 重複時、_find_user_for_subscription が None を返す。"""
+    from unittest.mock import patch
+
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_multi_123",
+        stripe_subscription_id="sub_multi_123",
+        status="active",
+    )
+
+    # metadata に user_id がないサブスクリプション（customer_id フォールバック経路）
+    subscription = {
+        "id": "sub_multi_new",
+        "status": "canceled",
+        "customer": "cus_multi_123",
+        "current_period_end": 9999999999,
+        "metadata": {},  # user_id なし → customer_id で検索
+        "items": {"data": [{"price": {"id": "price_test_123"}}]},
+    }
+
+    # BillingProfile.objects.get が MultipleObjectsReturned を返すようモック
+    with patch.object(
+        BillingProfile.objects, "get",
+        side_effect=BillingProfile.MultipleObjectsReturned,
+    ):
+        from apps.billing.views import _find_user_for_subscription
+        result = _find_user_for_subscription(subscription, "cus_multi_123")
+        assert result is None
+
+
 # 動作確認用・お守り的なテスト（残しておいてOK）
 @pytest.mark.django_db
 def test_pytest_django_is_working():
