@@ -41,6 +41,10 @@ def checkout(request):
 
     billing_profile, _ = BillingProfile.objects.get_or_create(user=request.user)
 
+    # 既に active なサブスクリプションがある場合は portal へリダイレクト
+    if billing_profile.status == "active":
+        return redirect("billing:portal")
+
     site_url = settings.SITE_URL.rstrip("/")
     success_url = f"{site_url}/billing/success/"
     cancel_url = f"{site_url}/billing/cancel/"
@@ -57,6 +61,9 @@ def checkout(request):
             billing_profile.save()
             customer_id = customer.id
 
+        hour_bucket = int(datetime.now(dt_timezone.utc).timestamp()) // 3600
+        idempotency_key = f"checkout_{request.user.id}_{hour_bucket}"
+
         session = stripe.checkout.Session.create(
             customer=customer_id,
             mode="subscription",
@@ -69,6 +76,7 @@ def checkout(request):
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={"user_id": str(request.user.id)},
+            idempotency_key=idempotency_key,
         )
 
         return redirect(session.url)

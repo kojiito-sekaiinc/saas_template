@@ -253,6 +253,58 @@ def test_multiple_objects_returned_is_handled_safely(user, monkeypatch):
         assert result is None
 
 
+# ====================================================
+# 7. active なユーザーが checkout → portal へリダイレクト
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_redirects_to_portal_when_already_active(user, monkeypatch, client):
+    monkeypatch.setattr("apps.billing.views.STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_active_123",
+        stripe_subscription_id="sub_active_123",
+        status="active",
+    )
+
+    client.force_login(user)
+    response = client.post("/billing/checkout/")
+    assert response.status_code == 302
+    assert "/billing/portal/" in response.url
+
+
+# ====================================================
+# 8. checkout が idempotency_key を Stripe に渡す
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_uses_idempotency_key(user, monkeypatch, client):
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr("apps.billing.views.STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_idem_123",
+        status="",
+    )
+
+    mock_session = MagicMock()
+    mock_session.url = "https://checkout.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.checkout.Session.create", return_value=mock_session) as mock_create:
+        response = client.post("/billing/checkout/")
+
+    assert response.status_code == 302
+    call_kwargs = mock_create.call_args[1]
+    assert "idempotency_key" in call_kwargs
+    assert call_kwargs["idempotency_key"].startswith(f"checkout_{user.id}_")
+
+
 # 動作確認用・お守り的なテスト（残しておいてOK）
 @pytest.mark.django_db
 def test_pytest_django_is_working():
