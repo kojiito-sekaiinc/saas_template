@@ -8,7 +8,7 @@ Designed for fast iteration, safe monetization, and service-by-service SaaS laun
 
 - **Backend**: Django
 - **Frontend**: Django Templates + HTMX + Tailwind CSS (static)
-- **Database**: Supabase PostgreSQL (SQLite for local development)
+- **Database**: PostgreSQL (SQLite for local development)
 - **Payments**: Stripe (subscription model)
 - **Deployment**: Railway
 - **Static Files**: WhiteNoise

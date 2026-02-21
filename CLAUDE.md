@@ -53,7 +53,7 @@ The technology stack is **fixed**:
 - Backend: Django
 - Frontend: Django Templates + HTMX + Tailwind CSS (static)
 - Authentication: Email + Password (Django standard auth)
-- Database: Supabase PostgreSQL (DB only, Django ORM)
+- Database: PostgreSQL (Railway, Django ORM)
 - Payments: Stripe (subscription model)
 - Deployment: Railway
 - Dependency management: requirements.txt
@@ -166,7 +166,6 @@ The following actions are strictly forbidden:
 
 - Introducing React, Next.js, Vue, or any frontend framework
 - Splitting frontend and backend into separate applications
-- Using Supabase Auth or RLS
 - Using Stripe trial features
 - Creating multiple pricing plans or tiers
 - Activating subscriptions outside Stripe Webhook

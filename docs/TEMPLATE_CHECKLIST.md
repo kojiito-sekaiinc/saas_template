@@ -42,7 +42,7 @@
   - `DEBUG=False`
   - `ALLOWED_HOSTS=<prod-domain>`
   - `SITE_URL=https://<prod-domain>`
-  - `DATABASE_URL=<supabase/railway postgres>`
+  - `DATABASE_URL=<railway postgres URL>`
   - Stripe 本番キー一式（live）+ 本番Price ID + Webhook secret
 - [ ] `python manage.py migrate` を本番で実行
 - [ ] Stripe 本番Webhook endpoint 作成
