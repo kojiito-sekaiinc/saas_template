@@ -151,7 +151,7 @@ CVC: 任意
 	1.	Stripe Dashboard → Webhooks → 該当エンドポイント
 	2.	customer.subscription.created / updated が 200 OK になっている
 	3.	Django Admin → BillingProfile を確認
-	•	status：active or trialing
+	•	status：active
 	•	stripe_customer_id / stripe_subscription_id が入っている
 	4.	/app/ にアクセスできることを確認
 

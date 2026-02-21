@@ -84,7 +84,7 @@ def test_app_access_allowed_when_subscription_active_after_free_period(client):
 @pytest.mark.django_db
 def test_app_access_redirects_to_pricing_when_free_expired_and_not_subscribed(client):
     """
-    free期間が終了していて、サブスクリプションも active/trialing でない場合は
+    free期間が終了していて、サブスクリプションも active でない場合は
     /billing/pricing( / ) にリダイレクトされる
     """
     user = User.objects.create_user(

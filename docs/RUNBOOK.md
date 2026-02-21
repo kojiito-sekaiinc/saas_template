@@ -19,7 +19,7 @@
 `/app/` へアクセスした際：
 1. 未ログイン → `/accounts/login/?next=...`
 2. ログイン済み & `now <= Profile.free_until` → 許可
-3. ログイン済み & `BillingProfile.status in ("active","trialing")` → 許可
+3. ログイン済み & `BillingProfile.status == "active"` → 許可
 4. それ以外 → `/billing/pricing/`
 
 ---
@@ -72,7 +72,7 @@
 
 **手順**
 1. Django Admin → `BillingProfile` を確認
-   - `status` が `"active"` or `"trialing"` か？
+   - `status` が `"active"` か？
    - `stripe_customer_id` / `stripe_subscription_id` は入っているか？
 2. Stripe Dashboard → Subscription を確認
    - `status` は何か？

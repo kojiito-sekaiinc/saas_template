@@ -32,7 +32,7 @@
 - [ ] `STRIPE_WEBHOOK_SECRET` を `.env` に設定
 - [ ] ローカルで課金導線確認
   - pricing → checkout → success
-  - Stripe webhook が届き BillingProfile.status が active/trialing になる
+  - Stripe webhook が届き BillingProfile.status が active になる
 
 ---
 
