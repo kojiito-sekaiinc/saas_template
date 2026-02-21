@@ -13,6 +13,6 @@ urlpatterns = [
     path("accounts/", include("apps.accounts.urls")),
     path("billing/", include("apps.billing.urls")),
     path("app/", include("apps.app.urls")),
-    path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
+    path("stripe/webhook", stripe_webhook, name="stripe_webhook"),
     path("admin/", admin.site.urls),
 ]

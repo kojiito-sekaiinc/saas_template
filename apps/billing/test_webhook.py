@@ -54,7 +54,7 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
     # apps.billing.views ロガーの INFO を caplog で捕まえる
     with caplog.at_level("INFO", logger="apps.billing.views"):
         response = client.post(
-            "/stripe/webhook/",  # URLパターンに合わせて必要なら調整
+            "/stripe/webhook",
             data=json.dumps({}),
             content_type="application/json",
             HTTP_STRIPE_SIGNATURE="test-signature",
