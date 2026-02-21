@@ -42,7 +42,7 @@ def login_view(request):
     next_url = _get_safe_next_url(request, settings.LOGIN_REDIRECT_URL)
 
     if request.method == "POST":
-        form = LoginForm(request.POST)
+        form = LoginForm(request, request.POST)
         if form.is_valid():
             login(request, form.get_user())
             return redirect(next_url)

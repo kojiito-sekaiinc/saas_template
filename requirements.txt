@@ -16,6 +16,9 @@ gunicorn>=23.0,<24
 # Environment variables
 python-dotenv>=1.0,<2
 
+# Security
+django-axes>=7.0,<8
+
 # Testing
 pytest>=8,<9
 pytest-django

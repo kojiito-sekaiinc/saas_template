@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party
+    "axes",
     # Local apps
     "apps.accounts",
     "apps.billing",
@@ -74,6 +76,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",
     "apps.common.middleware.PaywallMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -204,6 +207,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication
 AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/app/"
 LOGOUT_REDIRECT_URL = "/"
+
+# django-axes: ブルートフォース防御
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = 1  # 1時間後に自動解除
+AXES_LOCKOUT_PARAMETERS = [["username"]]  # メールアドレス単位
+AXES_RESET_ON_SUCCESS = True

@@ -21,7 +21,7 @@ class SignupForm(forms.Form):
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("This email is already registered.")
+            raise forms.ValidationError("Unable to register with this email.")
         return email
 
     def clean_password(self):
@@ -55,7 +55,8 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={"placeholder": "Password"})
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
         self.user = None
         super().__init__(*args, **kwargs)
 
@@ -65,7 +66,9 @@ class LoginForm(forms.Form):
         password = cleaned_data.get("password")
 
         if email and password:
-            self.user = authenticate(email=email.lower(), password=password)
+            self.user = authenticate(
+                request=self.request, email=email.lower(), password=password
+            )
             if self.user is None:
                 raise forms.ValidationError("Invalid email or password.")
             if not self.user.is_active:
