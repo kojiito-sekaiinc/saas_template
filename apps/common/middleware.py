@@ -4,6 +4,9 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.utils import timezone
 
+from apps.accounts.models import Profile
+from apps.billing.models import BillingProfile
+
 
 class PaywallMiddleware:
     """
@@ -56,12 +59,12 @@ class PaywallMiddleware:
 
     def _is_in_free_trial(self, user):
         """Check if user is in free trial period."""
-        # user.get_or_create_profile() に依存すると AnonymousUser などで壊れやすいので、
-        # 素直に profile プロパティを見る。
-        profile = getattr(user, "profile", None)
-        if not profile or not getattr(profile, "free_until", None):
+        try:
+            profile = user.profile
+        except (Profile.DoesNotExist, AttributeError):
             return False
-
+        if not profile.free_until:
+            return False
         return timezone.now() <= profile.free_until
 
     def _has_active_subscription(self, user):
@@ -71,7 +74,8 @@ class PaywallMiddleware:
         NOTE:
         - Only 'active' grants paid access (see CLAUDE.md Section 6).
         """
-        billing_profile = getattr(user, "billing_profile", None)
-        if not billing_profile:
+        try:
+            billing_profile = user.billing_profile
+        except (BillingProfile.DoesNotExist, AttributeError):
             return False
         return billing_profile.is_active
