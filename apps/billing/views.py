@@ -166,9 +166,17 @@ def stripe_webhook(request):
 def _handle_subscription_event(
     subscription, event_id: str | None, event_created: int | None = None
 ):
-    stripe_subscription_id = subscription["id"]
-    stripe_customer_id = subscription["customer"]
-    status = subscription["status"]
+    stripe_subscription_id = subscription.get("id")
+    stripe_customer_id = subscription.get("customer")
+    status = subscription.get("status")
+
+    if not all([stripe_subscription_id, stripe_customer_id, status]):
+        logger.warning(
+            "Stripe subscription event missing required fields: "
+            f"event_id={event_id}, "
+            f"id={stripe_subscription_id}, customer={stripe_customer_id}, status={status}"
+        )
+        return
     current_period_end_ts = subscription.get("current_period_end")
 
     if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):

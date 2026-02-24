@@ -64,3 +64,48 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
 
     # event_id を含むログが出ていることを検証
     assert "Stripe webhook received: event_id=evt_test_123" in caplog.text
+
+
+@pytest.mark.django_db
+def test_stripe_webhook_missing_required_fields_returns_200(monkeypatch, caplog):
+    """
+    subscription に必須キー（id）が欠損している場合、
+    KeyError ではなく warning ログ + 200 で安全に終了することを検証する。
+    """
+    from apps.billing import views as billing_views
+
+    # "id" キーを除去した subscription
+    subscription = {
+        "customer": "cus_test_456",
+        "status": "active",
+        "current_period_end": int(time.time()),
+        "metadata": {},
+        "items": {"data": []},
+    }
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_missing_fields",
+            "type": "customer.subscription.created",
+            "data": {"object": subscription},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("WARNING", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+    assert "missing required fields" in caplog.text
