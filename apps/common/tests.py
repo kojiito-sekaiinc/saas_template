@@ -105,6 +105,51 @@ def test_app_access_redirects_to_pricing_when_free_expired_and_not_subscribed(cl
 
 
 @pytest.mark.django_db
+def test_app_access_no_500_when_profile_missing(client):
+    """
+    Profile が存在しないユーザーで /app/ にアクセスしても
+    500 にならず /billing/pricing にリダイレクトされる
+    """
+    user = User.objects.create_user(
+        email="no-profile@example.com",
+        password="password123",
+    )
+
+    # signal で自動作成された Profile を削除
+    user.profile.delete()
+
+    client.force_login(user)
+    response = client.get("/app/")
+
+    assert response.status_code == 302
+    assert response.url in ("/billing/pricing", "/billing/pricing/")
+
+
+@pytest.mark.django_db
+def test_app_access_no_500_when_billing_profile_missing(client):
+    """
+    BillingProfile が存在しない & free期間切れのユーザーで /app/ にアクセスしても
+    500 にならず /billing/pricing にリダイレクトされる
+    """
+    user = User.objects.create_user(
+        email="no-billing@example.com",
+        password="password123",
+    )
+
+    profile = user.profile
+    profile.free_until = timezone.now() - timedelta(days=1)
+    profile.save()
+
+    # BillingProfile は作成しない
+
+    client.force_login(user)
+    response = client.get("/app/")
+
+    assert response.status_code == 302
+    assert response.url in ("/billing/pricing", "/billing/pricing/")
+
+
+@pytest.mark.django_db
 def test_whitelisted_paths_are_not_blocked(client):
     """
     ホーム / は paywall の対象外（/app/ 以外はこの middleware ではブロックしない）
