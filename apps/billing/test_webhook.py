@@ -109,3 +109,131 @@ def test_stripe_webhook_missing_required_fields_returns_200(monkeypatch, caplog)
 
     assert response.status_code == 200
     assert "missing required fields" in caplog.text
+
+
+@pytest.mark.django_db
+def test_deleted_event_bypasses_price_mismatch(monkeypatch, caplog):
+    """
+    deleted イベントは price_id チェックをバイパスし、
+    items.data が空でも BillingProfile.status が更新されることを検証する。
+    """
+    from apps.billing import views as billing_views
+    from apps.billing.models import BillingProfile
+
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="deleted-bypass@example.com",
+        password="testpass123",
+    )
+
+    # active 状態の BillingProfile を事前作成
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_del_123",
+        stripe_subscription_id="sub_del_123",
+        status="active",
+    )
+
+    # items.data が空の deleted イベント
+    subscription = {
+        "id": "sub_del_123",
+        "customer": "cus_del_123",
+        "status": "canceled",
+        "current_period_end": int(time.time()),
+        "metadata": {"user_id": str(user.id)},
+        "items": {"data": []},
+    }
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_deleted_bypass",
+            "type": "customer.subscription.deleted",
+            "created": int(time.time()),
+            "data": {"object": subscription},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("INFO", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.status == "canceled"
+
+
+@pytest.mark.django_db
+def test_deleted_event_works_without_stripe_price_id(monkeypatch, caplog):
+    """
+    STRIPE_PRICE_ID が未設定でも deleted イベントで
+    BillingProfile.status が更新されることを検証する。
+    """
+    from apps.billing import views as billing_views
+    from apps.billing.models import BillingProfile
+
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="deleted-noprice@example.com",
+        password="testpass123",
+    )
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_noprice_123",
+        stripe_subscription_id="sub_noprice_123",
+        status="active",
+    )
+
+    subscription = {
+        "id": "sub_noprice_123",
+        "customer": "cus_noprice_123",
+        "status": "canceled",
+        "current_period_end": int(time.time()),
+        "metadata": {"user_id": str(user.id)},
+        "items": {"data": [{"price": {"id": "price_other"}}]},
+    }
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_deleted_noprice",
+            "type": "customer.subscription.deleted",
+            "created": int(time.time()),
+            "data": {"object": subscription},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    # STRIPE_PRICE_ID をモジュールレベルで空文字に差し替え
+    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("INFO", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.status == "canceled"

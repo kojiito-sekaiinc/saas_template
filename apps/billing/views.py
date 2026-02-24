@@ -158,13 +158,14 @@ def stripe_webhook(request):
     ):
         subscription = event["data"]["object"]
         event_created = event.get("created")
-        _handle_subscription_event(subscription, event_id, event_created)
+        _handle_subscription_event(subscription, event_id, event_created, event_type)
 
     return HttpResponse(status=200)
 
 
 def _handle_subscription_event(
-    subscription, event_id: str | None, event_created: int | None = None
+    subscription, event_id: str | None, event_created: int | None = None,
+    event_type: str | None = None,
 ):
     stripe_subscription_id = subscription.get("id")
     stripe_customer_id = subscription.get("customer")
@@ -179,12 +180,13 @@ def _handle_subscription_event(
         return
     current_period_end_ts = subscription.get("current_period_end")
 
-    if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):
-        logger.info(
-            "Stripe subscription ignored (price mismatch): "
-            f"event_id={event_id}, subscription_id={stripe_subscription_id}"
-        )
-        return
+    if event_type != "customer.subscription.deleted":
+        if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):
+            logger.info(
+                "Stripe subscription ignored (price mismatch): "
+                f"event_id={event_id}, subscription_id={stripe_subscription_id}"
+            )
+            return
 
     current_period_end = None
     if current_period_end_ts:
