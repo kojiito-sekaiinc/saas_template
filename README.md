@@ -57,7 +57,7 @@ python manage.py runserver
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `SECRET_KEY` | Django secret key | Yes (production) |
-| `DEBUG` | Debug mode (True/False) | No (default: True) |
+| `DEBUG` | Debug mode (True/False) | No (default: False) |
 | `ALLOWED_HOSTS` | Comma-separated list of allowed hosts | No |
 | `DATABASE_URL` | PostgreSQL connection URL | No (uses SQLite if empty) |
 | `STRIPE_SECRET_KEY` | Stripe secret API key | Yes (for billing) |
