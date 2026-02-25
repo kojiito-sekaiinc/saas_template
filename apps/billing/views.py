@@ -182,11 +182,19 @@ def _handle_subscription_event(
 
     if event_type != "customer.subscription.deleted":
         if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):
+            # 既知のサブスクなら status 更新を許可（past_due, unpaid 等を拾う）
+            if not BillingProfile.objects.filter(
+                stripe_subscription_id=stripe_subscription_id
+            ).exists():
+                logger.info(
+                    "Stripe subscription ignored (price mismatch, unknown subscription): "
+                    f"event_id={event_id}, subscription_id={stripe_subscription_id}"
+                )
+                return
             logger.info(
-                "Stripe subscription ignored (price mismatch): "
+                "Price mismatch but known subscription — processing: "
                 f"event_id={event_id}, subscription_id={stripe_subscription_id}"
             )
-            return
 
     current_period_end = None
     if current_period_end_ts:

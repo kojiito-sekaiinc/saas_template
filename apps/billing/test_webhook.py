@@ -64,6 +64,8 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
 
     # event_id を含むログが出ていることを検証
     assert "Stripe webhook received: event_id=evt_test_123" in caplog.text
+    # price mismatch + unknown subscription → 無視ログ
+    assert "price mismatch, unknown subscription" in caplog.text
 
 
 @pytest.mark.django_db
@@ -237,3 +239,136 @@ def test_deleted_event_works_without_stripe_price_id(monkeypatch, caplog):
 
     bp = BillingProfile.objects.get(user=user)
     assert bp.status == "canceled"
+
+
+@pytest.mark.django_db
+def test_price_mismatch_known_subscription_updates_status(monkeypatch, caplog):
+    """
+    price 不一致でも stripe_subscription_id が既存 BillingProfile に一致する場合、
+    status が更新されることを検証する（past_due 等の反映）。
+    """
+    from apps.billing import views as billing_views
+    from apps.billing.models import BillingProfile
+
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="known-sub@example.com",
+        password="testpass123",
+    )
+
+    # active 状態の BillingProfile を事前作成
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_known_123",
+        stripe_subscription_id="sub_known_123",
+        status="active",
+    )
+
+    # price 不一致の updated イベント（status=past_due）
+    subscription = {
+        "id": "sub_known_123",
+        "customer": "cus_known_123",
+        "status": "past_due",
+        "current_period_end": int(time.time()),
+        "metadata": {"user_id": str(user.id)},
+        "items": {"data": [{"price": {"id": "price_other_service"}}]},
+    }
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_known_mismatch",
+            "type": "customer.subscription.updated",
+            "created": int(time.time()),
+            "data": {"object": subscription},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "price_expected_123")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("INFO", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.status == "past_due"
+    assert "Price mismatch but known subscription" in caplog.text
+
+
+@pytest.mark.django_db
+def test_price_mismatch_unknown_subscription_is_ignored(monkeypatch, caplog):
+    """
+    price 不一致かつ stripe_subscription_id が BillingProfile に存在しない場合、
+    イベントが無視されることを検証する（別サービスの混入防止）。
+    """
+    from apps.billing import views as billing_views
+    from apps.billing.models import BillingProfile
+
+    User = get_user_model()
+    user = User.objects.create_user(
+        email="unknown-sub@example.com",
+        password="testpass123",
+    )
+
+    # 別の subscription_id を持つ BillingProfile
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_existing_456",
+        stripe_subscription_id="sub_existing_456",
+        status="active",
+    )
+
+    # 別の subscription_id + price 不一致の updated イベント
+    subscription = {
+        "id": "sub_other_service_789",
+        "customer": "cus_existing_456",
+        "status": "past_due",
+        "current_period_end": int(time.time()),
+        "metadata": {"user_id": str(user.id)},
+        "items": {"data": [{"price": {"id": "price_other_service"}}]},
+    }
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_unknown_mismatch",
+            "type": "customer.subscription.updated",
+            "created": int(time.time()),
+            "data": {"object": subscription},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "price_expected_123")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("INFO", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+
+    # status は active のまま変わらないことを検証
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.status == "active"
+    assert "price mismatch, unknown subscription" in caplog.text
