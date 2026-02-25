@@ -219,5 +219,6 @@ LOGOUT_REDIRECT_URL = "/"
 # django-axes: ブルートフォース防御
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # 1時間後に自動解除
-AXES_LOCKOUT_PARAMETERS = [["username"]]  # メールアドレス単位
+AXES_LOCKOUT_PARAMETERS = [["username"]]  # axes 内部キー "username" = email（下記設定で明示）
+AXES_USERNAME_FORM_FIELD = "email"  # authenticate() に渡すキーワードと一致させる
 AXES_RESET_ON_SUCCESS = True

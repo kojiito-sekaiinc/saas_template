@@ -38,6 +38,24 @@ class LoginLockoutTest(TestCase):
         self.assertEqual(resp.status_code, 429)
         self.assertFalse(resp.wsgi_request.user.is_authenticated)
 
+    def test_lockout_is_per_email(self):
+        """ロックアウトはメールアドレス単位。別ユーザーに波及しない"""
+        User.objects.create_user(
+            email="other@example.com", password="Correct!Pass1"
+        )
+
+        # user_a (lock@example.com) を5回失敗させてロックアウト
+        for _ in range(settings.AXES_FAILURE_LIMIT):
+            self._attempt_login(email="lock@example.com", password="wrong")
+
+        # user_a はロックアウト済み
+        resp_a = self._attempt_login(email="lock@example.com", password="Correct!Pass1")
+        self.assertEqual(resp_a.status_code, 429)
+
+        # user_b (other@example.com) は影響を受けない
+        resp_b = self._attempt_login(email="other@example.com", password="wrong")
+        self.assertNotEqual(resp_b.status_code, 429)
+
 
 class SignupEmailEnumerationTest(TestCase):
     """signup フォームがメール列挙に利用されないことを確認"""
