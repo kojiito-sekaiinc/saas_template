@@ -69,6 +69,42 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
 
 
 @pytest.mark.django_db
+def test_stripe_webhook_missing_data_object_returns_200(monkeypatch, caplog):
+    """
+    署名検証済みだが data.object が欠損している場合、
+    500 ではなく warning ログ + 200 で安全に終了することを検証する。
+    """
+    from apps.billing import views as billing_views
+
+    def fake_construct_event(payload, sig_header, secret):
+        return {
+            "id": "evt_bad_structure",
+            "type": "customer.subscription.updated",
+            "data": {},
+        }
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr(
+        billing_views.stripe.Webhook,
+        "construct_event",
+        staticmethod(fake_construct_event),
+    )
+
+    client = Client()
+
+    with caplog.at_level("WARNING", logger="apps.billing.views"):
+        response = client.post(
+            "/stripe/webhook",
+            data=json.dumps({}),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test-signature",
+        )
+
+    assert response.status_code == 200
+    assert "unexpected event structure" in caplog.text
+
+
+@pytest.mark.django_db
 def test_stripe_webhook_missing_required_fields_returns_200(monkeypatch, caplog):
     """
     subscription に必須キー（id）が欠損している場合、

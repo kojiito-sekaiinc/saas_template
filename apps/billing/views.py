@@ -156,7 +156,13 @@ def stripe_webhook(request):
         "customer.subscription.updated",
         "customer.subscription.deleted",
     ):
-        subscription = event["data"]["object"]
+        subscription = event.get("data", {}).get("object")
+        if not subscription:
+            logger.warning(
+                "Stripe webhook: unexpected event structure (missing data.object): "
+                f"event_id={event_id}, type={event_type}"
+            )
+            return HttpResponse(status=200)
         event_created = event.get("created")
         _handle_subscription_event(subscription, event_id, event_created, event_type)
 
