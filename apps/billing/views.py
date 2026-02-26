@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime, timezone as dt_timezone
 
 import stripe
@@ -17,13 +16,6 @@ from .models import BillingProfile, ProcessedEvent
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
-# Stripe configuration (loaded once at import time)
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
-
-if STRIPE_SECRET_KEY:
-    stripe.api_key = STRIPE_SECRET_KEY
-
 
 def pricing(request):
     context = {
@@ -36,40 +28,48 @@ def pricing(request):
 @login_required
 @require_POST
 def checkout(request):
-    if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_ID:
         return HttpResponse("Stripe is not configured", status=500)
 
-    billing_profile, _ = BillingProfile.objects.get_or_create(user=request.user)
+    with transaction.atomic():
+        billing_profile, _ = BillingProfile.objects.select_for_update().get_or_create(
+            user=request.user
+        )
 
-    # 既に active なサブスクリプションがある場合は portal へリダイレクト
-    if billing_profile.status == "active":
-        return redirect("billing:portal")
+        # 既に active なサブスクリプションがある場合は portal へリダイレクト
+        if billing_profile.status == "active":
+            return redirect("billing:portal")
 
-    site_url = settings.SITE_URL.rstrip("/")
-    success_url = f"{site_url}/billing/success/"
-    cancel_url = f"{site_url}/billing/cancel/"
+        site_url = settings.SITE_URL.rstrip("/")
+        success_url = f"{site_url}/billing/success/"
+        cancel_url = f"{site_url}/billing/cancel/"
+
+        try:
+            if billing_profile.stripe_customer_id:
+                customer_id = billing_profile.stripe_customer_id
+            else:
+                customer = stripe.Customer.create(
+                    email=request.user.email,
+                    metadata={"user_id": str(request.user.id)},
+                )
+                billing_profile.stripe_customer_id = customer.id
+                billing_profile.save()
+                customer_id = customer.id
+        except stripe.StripeError as e:
+            logger.error(f"Stripe Checkout error: {e}")
+            return HttpResponse("An error occurred. Please try again later.", status=500)
+
+    hour_bucket = int(datetime.now(dt_timezone.utc).timestamp()) // 3600
+    idempotency_key = f"checkout_{request.user.id}_{hour_bucket}"
 
     try:
-        if billing_profile.stripe_customer_id:
-            customer_id = billing_profile.stripe_customer_id
-        else:
-            customer = stripe.Customer.create(
-                email=request.user.email,
-                metadata={"user_id": str(request.user.id)},
-            )
-            billing_profile.stripe_customer_id = customer.id
-            billing_profile.save()
-            customer_id = customer.id
-
-        hour_bucket = int(datetime.now(dt_timezone.utc).timestamp()) // 3600
-        idempotency_key = f"checkout_{request.user.id}_{hour_bucket}"
-
         session = stripe.checkout.Session.create(
             customer=customer_id,
             mode="subscription",
             line_items=[
                 {
-                    "price": STRIPE_PRICE_ID,
+                    "price": settings.STRIPE_PRICE_ID,
                     "quantity": 1,
                 }
             ],
@@ -98,7 +98,8 @@ def cancel(request):
 
 @login_required
 def portal(request):
-    if not STRIPE_SECRET_KEY:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    if not settings.STRIPE_SECRET_KEY:
         return HttpResponse("Stripe is not configured", status=500)
 
     try:
@@ -127,13 +128,13 @@ def portal(request):
 @require_POST
 def stripe_webhook(request):
     """Stripe webhook endpoint - single source of truth for billing state."""
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+    webhook_secret = settings.STRIPE_WEBHOOK_SECRET
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
 
     if not webhook_secret:
         logger.error("STRIPE_WEBHOOK_SECRET not configured")
-        return HttpResponse("Webhook secret not configured", status=500)
+        return HttpResponse("Webhook secret not configured", status=400)
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
@@ -187,7 +188,7 @@ def _handle_subscription_event(
     current_period_end_ts = subscription.get("current_period_end")
 
     if event_type != "customer.subscription.deleted":
-        if not _is_valid_subscription(subscription, STRIPE_PRICE_ID):
+        if not _is_valid_subscription(subscription, settings.STRIPE_PRICE_ID):
             # 既知のサブスクなら status 更新を許可（past_due, unpaid 等を拾う）
             if not BillingProfile.objects.filter(
                 stripe_subscription_id=stripe_subscription_id
@@ -219,16 +220,6 @@ def _handle_subscription_event(
 
     try:
         with transaction.atomic():
-            # Deduplication: reject already-processed events
-            if event_id:
-                try:
-                    ProcessedEvent.objects.create(event_id=event_id)
-                except IntegrityError:
-                    logger.info(
-                        f"Duplicate Stripe event skipped: event_id={event_id}"
-                    )
-                    return
-
             billing_profile, _ = BillingProfile.objects.get_or_create(user=user)
             billing_profile = (
                 BillingProfile.objects.select_for_update().get(pk=billing_profile.pk)
@@ -246,6 +237,16 @@ def _handle_subscription_event(
                     f"last={billing_profile.last_stripe_event_created}"
                 )
                 return
+
+            # Deduplication: reject already-processed events
+            if event_id:
+                try:
+                    ProcessedEvent.objects.create(event_id=event_id)
+                except IntegrityError:
+                    logger.info(
+                        f"Duplicate Stripe event skipped: event_id={event_id}"
+                    )
+                    return
 
             billing_profile.stripe_customer_id = stripe_customer_id
             billing_profile.stripe_subscription_id = stripe_subscription_id

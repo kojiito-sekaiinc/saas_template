@@ -6,7 +6,7 @@ class ProcessedEvent(models.Model):
     """Processed Stripe event log for deduplication."""
 
     event_id = models.CharField(max_length=255, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "billing_processed_events"

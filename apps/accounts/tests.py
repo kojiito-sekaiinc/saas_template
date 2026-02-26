@@ -80,3 +80,75 @@ class SignupEmailEnumerationTest(TestCase):
         content = resp.content.decode()
         self.assertNotIn("registered", content.lower())
         self.assertIn("Unable to register with this email", content)
+
+
+class SignupLoginSuccessTest(TestCase):
+    """サインアップ・ログイン成功時のテスト (#9)"""
+
+    def setUp(self):
+        self.signup_url = "/accounts/signup/"
+        self.login_url = "/accounts/login/"
+
+    def test_successful_signup_creates_user_and_redirects(self):
+        """正常なサインアップでユーザー作成・リダイレクト"""
+        resp = self.client.post(
+            self.signup_url,
+            {
+                "email": "new@example.com",
+                "password": "StrongPass1!",
+                "password_confirm": "StrongPass1!",
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+
+    def test_successful_login_redirects(self):
+        """正常なログインでデフォルトURLにリダイレクト"""
+        User.objects.create_user(email="login@example.com", password="TestPass1!")
+        resp = self.client.post(
+            self.login_url,
+            {"email": "login@example.com", "password": "TestPass1!"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, settings.LOGIN_REDIRECT_URL)
+
+    def test_successful_login_with_next_url(self):
+        """next パラメータ付きログインで指定URLにリダイレクト"""
+        User.objects.create_user(email="next@example.com", password="TestPass1!")
+        resp = self.client.post(
+            f"{self.login_url}?next=/app/dashboard/",
+            {"email": "next@example.com", "password": "TestPass1!"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, "/app/dashboard/")
+
+
+class OpenRedirectTest(TestCase):
+    """オープンリダイレクト防御テスト (#10)"""
+
+    def setUp(self):
+        self.signup_url = "/accounts/signup/"
+        self.login_url = "/accounts/login/"
+
+    def test_open_redirect_blocked_on_login(self):
+        """ログイン時に外部URLへのリダイレクトがブロックされる"""
+        User.objects.create_user(email="redir@example.com", password="TestPass1!")
+        resp = self.client.post(
+            f"{self.login_url}?next=https://evil.com/steal",
+            {"email": "redir@example.com", "password": "TestPass1!"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, settings.LOGIN_REDIRECT_URL)
+
+    def test_open_redirect_blocked_on_signup(self):
+        """サインアップ時に外部URLへのリダイレクトがブロックされる"""
+        resp = self.client.post(
+            f"{self.signup_url}?next=https://evil.com/steal",
+            {
+                "email": "redir-signup@example.com",
+                "password": "StrongPass1!",
+                "password_confirm": "StrongPass1!",
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotIn("evil.com", resp.url)

@@ -222,3 +222,34 @@ AXES_COOLOFF_TIME = 1  # 1時間後に自動解除
 AXES_LOCKOUT_PARAMETERS = [["username"]]  # axes 内部キー "username" = email（下記設定で明示）
 AXES_USERNAME_FORM_FIELD = "email"  # authenticate() に渡すキーワードと一致させる
 AXES_RESET_ON_SUCCESS = True
+
+# Stripe configuration (centralized)
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+# CSRF_TRUSTED_ORIGINS fallback: HTTPS の SITE_URL を自動追加
+if not CSRF_TRUSTED_ORIGINS and SITE_URL.startswith("https://"):
+    CSRF_TRUSTED_ORIGINS = [SITE_URL.rstrip("/")]
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
+# Cache (used for rate limiting etc.)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}

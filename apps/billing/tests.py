@@ -3,6 +3,7 @@
 import time
 
 import pytest
+from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 
 from apps.billing.models import BillingProfile, ProcessedEvent
@@ -57,7 +58,7 @@ def user():
 
 @pytest.mark.django_db
 def test_handle_subscription_created_active_marks_profile_active(user, monkeypatch):
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     subscription = _build_subscription_payload(
         user_id=user.id,
@@ -83,7 +84,7 @@ def test_handle_subscription_created_active_marks_profile_active(user, monkeypat
 
 @pytest.mark.django_db
 def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, monkeypatch):
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     bp = BillingProfile.objects.create(
         user=user,
@@ -113,7 +114,7 @@ def test_handle_subscription_updated_to_canceled_makes_profile_inactive(user, mo
 
 @pytest.mark.django_db
 def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     bp = BillingProfile.objects.create(
         user=user,
@@ -143,7 +144,7 @@ def test_handle_subscription_deleted_makes_profile_inactive(user, monkeypatch):
 
 @pytest.mark.django_db
 def test_duplicate_event_id_is_rejected(user, monkeypatch):
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     # 1回目: active で処理
     sub_active = _build_subscription_payload(
@@ -182,7 +183,7 @@ def test_duplicate_event_id_is_rejected(user, monkeypatch):
 
 @pytest.mark.django_db
 def test_out_of_order_event_does_not_overwrite(user, monkeypatch):
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     # 新しいイベント (event_created=2000): canceled
     sub_new = _build_subscription_payload(
@@ -224,7 +225,7 @@ def test_multiple_objects_returned_is_handled_safely(user, monkeypatch):
     """stripe_customer_id 重複時、_find_user_for_subscription が None を返す。"""
     from unittest.mock import patch
 
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     BillingProfile.objects.create(
         user=user,
@@ -259,8 +260,8 @@ def test_multiple_objects_returned_is_handled_safely(user, monkeypatch):
 
 @pytest.mark.django_db
 def test_checkout_redirects_to_portal_when_already_active(user, monkeypatch, client):
-    monkeypatch.setattr("apps.billing.views.STRIPE_SECRET_KEY", "sk_test_xxx")
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     BillingProfile.objects.create(
         user=user,
@@ -283,8 +284,8 @@ def test_checkout_redirects_to_portal_when_already_active(user, monkeypatch, cli
 def test_checkout_uses_idempotency_key(user, monkeypatch, client):
     from unittest.mock import MagicMock, patch
 
-    monkeypatch.setattr("apps.billing.views.STRIPE_SECRET_KEY", "sk_test_xxx")
-    monkeypatch.setattr("apps.billing.views.STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
 
     BillingProfile.objects.create(
         user=user,

@@ -42,7 +42,7 @@ def test_stripe_webhook_logs_event_id(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -83,7 +83,7 @@ def test_stripe_webhook_missing_data_object_returns_200(monkeypatch, caplog):
             "data": {},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -128,7 +128,7 @@ def test_stripe_webhook_missing_required_fields_returns_200(monkeypatch, caplog)
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -190,7 +190,7 @@ def test_deleted_event_bypasses_price_mismatch(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -252,9 +252,9 @@ def test_deleted_event_works_without_stripe_price_id(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
     # STRIPE_PRICE_ID をモジュールレベルで空文字に差し替え
-    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "")
+    monkeypatch.setattr("django.conf.settings.STRIPE_PRICE_ID", "")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -318,8 +318,8 @@ def test_price_mismatch_known_subscription_updates_status(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
-    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "price_expected_123")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_PRICE_ID", "price_expected_123")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
@@ -384,8 +384,8 @@ def test_price_mismatch_unknown_subscription_is_ignored(monkeypatch, caplog):
             "data": {"object": subscription},
         }
 
-    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
-    monkeypatch.setattr(billing_views, "STRIPE_PRICE_ID", "price_expected_123")
+    monkeypatch.setattr("django.conf.settings.STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+    monkeypatch.setattr("django.conf.settings.STRIPE_PRICE_ID", "price_expected_123")
     monkeypatch.setattr(
         billing_views.stripe.Webhook,
         "construct_event",
