@@ -29,7 +29,7 @@ def get_client_ip(request):
     if not xff:
         return request.META.get("REMOTE_ADDR", "")
 
-    ips = [ip.strip() for ip in xff.split(",")]
+    ips = [ip.strip() for ip in xff.split(",") if ip.strip()]
     if len(ips) < trusted:
         # XFF エントリ数がプロキシ数未満 → 設定ミスまたは直接アクセスの疑い
         # fail-open を避けるため REMOTE_ADDR にフォールバック

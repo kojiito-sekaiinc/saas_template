@@ -207,3 +207,12 @@ def test_get_client_ip_no_xff_falls_back_to_remote_addr(rf):
     """XFF ヘッダーがない場合は REMOTE_ADDR にフォールバック"""
     req = rf.get("/", REMOTE_ADDR="1.2.3.4")
     assert get_client_ip(req) == "1.2.3.4"
+
+
+@override_settings(TRUSTED_PROXY_COUNT=1)
+def test_get_client_ip_xff_empty_entries_are_ignored(rf):
+    """XFF に空要素が含まれても空文字を返さない（例: 'a,,b' や ', 9.9.9.9'）"""
+    req = rf.get("/", REMOTE_ADDR="proxy", HTTP_X_FORWARDED_FOR=", 9.9.9.9")
+    # ips（空除外後）= ["9.9.9.9"], len=1 == trusted=1 → "9.9.9.9"
+    assert get_client_ip(req) == "9.9.9.9"
+    assert get_client_ip(req) != ""
