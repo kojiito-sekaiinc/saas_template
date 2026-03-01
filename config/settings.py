@@ -248,6 +248,20 @@ LOGGING = {
 }
 
 # Cache (used for rate limiting etc.)
+#
+# 【前提条件】LocMemCache はプロセスローカルなため、以下の条件を満たす場合のみ有効:
+#   - Gunicorn シングルワーカー（--workers 1）
+#   - Railway シングルインスタンス（スケールアウトなし）
+#
+# 【Redis への移行が必要な条件】以下のいずれかに該当する場合は django-redis に切り替えること:
+#   - Gunicorn ワーカーを 2 以上に増やすとき
+#   - Railway でインスタンスを複数に増やすとき（水平スケール）
+#   - レート制限をプロセス間で確実に共有する必要が生じたとき
+#
+# 移行手順の概要:
+#   1. Railway に Redis プラグインを追加し REDIS_URL を取得
+#   2. django-redis を requirements.txt に追加
+#   3. BACKEND を "django_redis.cache.RedisCache" に変更し LOCATION に REDIS_URL を設定
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

@@ -85,3 +85,24 @@ python manage.py runserver
 - This is a **reusable template**. When creating new services, modify only `apps/app`.
 - Do not change billing or paywall logic unless absolutely necessary.
 - Subscription: 980 JPY/month with 7-day free trial (managed by application, not Stripe).
+
+## Known Limitations
+
+### Rate Limiting Cache (LocMemCache)
+
+The signup rate limiter uses Django's `LocMemCache`, which is **process-local**.
+This works correctly only under the following conditions:
+
+- Single Gunicorn worker (`--workers 1`)
+- Single Railway instance (no horizontal scaling)
+
+**Migrate to Redis when any of the following apply:**
+
+- Increasing Gunicorn workers to 2 or more
+- Scaling to multiple Railway instances
+- Rate limit counters must be shared reliably across processes
+
+Migration steps:
+1. Add a Redis plugin on Railway and obtain `REDIS_URL`
+2. Add `django-redis` to `requirements.txt`
+3. Update `CACHES` in `config/settings.py` to use `django_redis.cache.RedisCache` with `REDIS_URL`
