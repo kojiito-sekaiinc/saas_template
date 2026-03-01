@@ -6,9 +6,11 @@ from urllib.parse import urlparse, parse_qs
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.test import RequestFactory, override_settings
 from django.utils import timezone
 
 from apps.billing.models import BillingProfile
+from apps.common.utils import get_client_ip
 
 User = get_user_model()
 
@@ -160,3 +162,48 @@ def test_whitelisted_paths_are_not_blocked(client):
     if response.status_code == 302:
         assert not response.url.startswith("/accounts/login")
         assert not response.url.startswith("/billing/pricing")
+
+
+# ---------------------------------------------------------------------------
+# get_client_ip ユニットテスト
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def rf():
+    return RequestFactory()
+
+
+@override_settings(TRUSTED_PROXY_COUNT=0)
+def test_get_client_ip_no_proxy_returns_remote_addr(rf):
+    """TRUSTED_PROXY_COUNT=0 では REMOTE_ADDR をそのまま返す"""
+    req = rf.get("/", REMOTE_ADDR="1.2.3.4")
+    assert get_client_ip(req) == "1.2.3.4"
+
+
+@override_settings(TRUSTED_PROXY_COUNT=1)
+def test_get_client_ip_single_xff_entry(rf):
+    """XFF が 1 エントリ、TRUSTED_PROXY_COUNT=1 → XFF の値を返す"""
+    req = rf.get("/", REMOTE_ADDR="proxy", HTTP_X_FORWARDED_FOR="9.9.9.9")
+    assert get_client_ip(req) == "9.9.9.9"
+
+
+@override_settings(TRUSTED_PROXY_COUNT=1)
+def test_get_client_ip_xff_spoofed_prefix_is_ignored(rf):
+    """クライアントが XFF 先頭に偽装 IP を挿入しても、右から N 番目を返す"""
+    req = rf.get("/", REMOTE_ADDR="proxy", HTTP_X_FORWARDED_FOR="evil, 9.9.9.9")
+    assert get_client_ip(req) == "9.9.9.9"
+
+
+@override_settings(TRUSTED_PROXY_COUNT=2)
+def test_get_client_ip_trusted_exceeds_xff_falls_back_to_remote_addr(rf):
+    """XFF エントリ数 < TRUSTED_PROXY_COUNT → fail-open を避け REMOTE_ADDR にフォールバック"""
+    req = rf.get("/", REMOTE_ADDR="1.2.3.4", HTTP_X_FORWARDED_FOR="9.9.9.9")
+    # ips=["9.9.9.9"] (1 entry) < trusted=2 → REMOTE_ADDR を返す
+    assert get_client_ip(req) == "1.2.3.4"
+
+
+@override_settings(TRUSTED_PROXY_COUNT=1)
+def test_get_client_ip_no_xff_falls_back_to_remote_addr(rf):
+    """XFF ヘッダーがない場合は REMOTE_ADDR にフォールバック"""
+    req = rf.get("/", REMOTE_ADDR="1.2.3.4")
+    assert get_client_ip(req) == "1.2.3.4"
