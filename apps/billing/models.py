@@ -19,6 +19,9 @@ class BillingProfile(models.Model):
     """User billing profile for Stripe subscription management."""
 
     STATUS_CHOICES = [
+        # アプリ内部状態（Stripe 連携前）
+        ("not_subscribed", "Not Subscribed"),
+        # Stripe サブスクリプションステータス
         ("active", "Active"),
         ("trialing", "Trialing"),
         ("canceled", "Canceled"),
@@ -39,7 +42,11 @@ class BillingProfile(models.Model):
     stripe_subscription_id = models.CharField(
         max_length=255, blank=True, null=True, unique=True, default=None
     )
-    status = models.CharField(max_length=20, blank=True, choices=STATUS_CHOICES)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="not_subscribed",
+    )
     current_period_end = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

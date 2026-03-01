@@ -290,7 +290,7 @@ def test_checkout_uses_idempotency_key(user, monkeypatch, client):
     BillingProfile.objects.create(
         user=user,
         stripe_customer_id="cus_idem_123",
-        status="",
+        status="not_subscribed",
     )
 
     mock_session = MagicMock()
