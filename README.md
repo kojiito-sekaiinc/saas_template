@@ -61,7 +61,6 @@ python manage.py runserver
 | `ALLOWED_HOSTS` | Comma-separated list of allowed hosts | No |
 | `DATABASE_URL` | PostgreSQL connection URL | No (uses SQLite if empty) |
 | `STRIPE_SECRET_KEY` | Stripe secret API key | Yes (for billing) |
-| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable API key | Yes (for billing) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes (for billing) |
 | `STRIPE_PRICE_ID` | Stripe Price ID for subscription | Yes (for billing) |
 | `TRUSTED_PROXY_COUNT` | Number of trusted reverse proxies (set `1` on Railway) | No (default: `0`) |

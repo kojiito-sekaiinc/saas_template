@@ -21,7 +21,7 @@
 
 ## 2) Stripe（当日中にやる）
 - [ ] Product/Price 作成（月額980円 or サービスに合わせた価格）
-- [ ] `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` 設定
+- [ ] `STRIPE_SECRET_KEY` 設定
 - [ ] `STRIPE_PRICE_ID` を `.env` に設定
 - [ ] Webhook endpoint を作成
   - URL: `<SITE_URL>/stripe/webhook`

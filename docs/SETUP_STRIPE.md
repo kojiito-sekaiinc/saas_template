@@ -57,11 +57,11 @@ Stripe Dashboard → **Developers → API keys**
 - Publishable key：`pk_test_...`
 - Secret key：`sk_test_...`
 
-これらを `.env` に設定します。
+Secret key を `.env` に設定します。
+Publishable key はこのテンプレでは未使用です（Stripe Checkout のサーバーサイドリダイレクトのみ使用）。
 
 ```env
 STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 STRIPE_PRICE_ID=price_xxx
 ```
 
