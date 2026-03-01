@@ -64,6 +64,7 @@ python manage.py runserver
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable API key | Yes (for billing) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes (for billing) |
 | `STRIPE_PRICE_ID` | Stripe Price ID for subscription | Yes (for billing) |
+| `TRUSTED_PROXY_COUNT` | Number of trusted reverse proxies (set `1` on Railway) | No (default: `0`) |
 
 ## Project Structure
 

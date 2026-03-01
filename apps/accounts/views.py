@@ -6,6 +6,8 @@ from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from apps.common.utils import get_client_ip
+
 from .forms import LoginForm, SignupForm
 
 SIGNUP_RATE_LIMIT = 10  # max attempts per hour
@@ -29,7 +31,7 @@ def signup_view(request):
 
     if request.method == "POST":
         # IP-based rate limiting
-        ip = request.META.get("REMOTE_ADDR", "")
+        ip = get_client_ip(request)
         cache_key = f"signup_rate_{ip}"
         attempts = cache.get(cache_key, 0)
         if attempts >= SIGNUP_RATE_LIMIT:

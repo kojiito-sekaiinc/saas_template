@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.core.cache import cache
+from django.test import Client, TestCase, override_settings
 
 from axes.helpers import get_client_cache_keys
 
@@ -121,6 +122,102 @@ class SignupLoginSuccessTest(TestCase):
         )
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, "/app/dashboard/")
+
+
+@override_settings(TRUSTED_PROXY_COUNT=0)
+class SignupRateLimitTest(TestCase):
+    """signup IP レート制限のテスト"""
+
+    SIGNUP_URL = "/accounts/signup/"
+    VALID_POST = {
+        "email": "ratelimit@example.com",
+        "password": "StrongPass1!",
+        "password_confirm": "StrongPass1!",
+    }
+
+    def setUp(self):
+        cache.clear()
+
+    def _post_signup(self, email_suffix=0, remote_addr="1.2.3.4", xff=None):
+        # 毎回新規クライアントを使い、ログイン状態が持ち越されないようにする
+        c = Client()
+        kwargs = {"REMOTE_ADDR": remote_addr}
+        if xff is not None:
+            kwargs["HTTP_X_FORWARDED_FOR"] = xff
+        return c.post(
+            self.SIGNUP_URL,
+            {**self.VALID_POST, "email": f"u{email_suffix}@example.com"},
+            **kwargs,
+        )
+
+    def test_signup_rate_limit_blocks_after_limit(self):
+        """10回ポスト後に 429 が返ること"""
+        for i in range(10):
+            resp = self._post_signup(email_suffix=i, remote_addr="1.2.3.4")
+            self.assertNotEqual(resp.status_code, 429, f"blocked too early at attempt {i+1}")
+
+        resp = self._post_signup(email_suffix=99, remote_addr="1.2.3.4")
+        self.assertEqual(resp.status_code, 429)
+
+    def test_signup_rate_limit_different_ips_independent(self):
+        """IP が異なれば別カウント（TRUSTED_PROXY_COUNT=0 で REMOTE_ADDR を使用）"""
+        # 1.2.3.4 を 10 回使い切る
+        for i in range(10):
+            self._post_signup(email_suffix=i, remote_addr="1.2.3.4")
+
+        # 別 IP はまだブロックされない
+        resp = self._post_signup(email_suffix=50, remote_addr="5.6.7.8")
+        self.assertNotEqual(resp.status_code, 429)
+
+    @override_settings(TRUSTED_PROXY_COUNT=1)
+    def test_signup_rate_limit_xff_with_trusted_proxy(self):
+        """TRUSTED_PROXY_COUNT=1 設定時、XFF の正規化 IP でカウントされること"""
+        cache.clear()
+        # XFF に client_ip だけ → ips[max(0, 1-1)] = ips[0] = "9.9.9.9"
+        for i in range(10):
+            resp = self._post_signup(
+                email_suffix=i,
+                remote_addr="proxy.railway.internal",
+                xff="9.9.9.9",
+            )
+            self.assertNotEqual(resp.status_code, 429, f"blocked too early at attempt {i+1}")
+
+        resp = self._post_signup(
+            email_suffix=99,
+            remote_addr="proxy.railway.internal",
+            xff="9.9.9.9",
+        )
+        self.assertEqual(resp.status_code, 429)
+
+    @override_settings(TRUSTED_PROXY_COUNT=1)
+    def test_signup_xff_spoofing_is_blocked(self):
+        """TRUSTED_PROXY_COUNT=1 時にクライアントが XFF を偽装しても正しい IP が使われること"""
+        cache.clear()
+        # クライアントが "evil_ip" を先頭に挿入するが、プロキシが "real_client" を末尾追加
+        # → ips = ["evil_ip", "real_client"], idx = max(0, 2-1) = 1 → "real_client"
+        for i in range(10):
+            resp = self._post_signup(
+                email_suffix=i,
+                remote_addr="proxy.railway.internal",
+                xff="evil_ip, real_client",
+            )
+            self.assertNotEqual(resp.status_code, 429, f"blocked too early at attempt {i+1}")
+
+        resp = self._post_signup(
+            email_suffix=99,
+            remote_addr="proxy.railway.internal",
+            xff="evil_ip, real_client",
+        )
+        self.assertEqual(resp.status_code, 429)
+
+        # "evil_ip" 単独では別カウント → まだブロックされない
+        cache.clear()
+        resp = self._post_signup(
+            email_suffix=100,
+            remote_addr="proxy.railway.internal",
+            xff="evil_ip",
+        )
+        self.assertNotEqual(resp.status_code, 429)
 
 
 class OpenRedirectTest(TestCase):

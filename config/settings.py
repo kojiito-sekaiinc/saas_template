@@ -253,3 +253,7 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
+
+# リバースプロキシ数（Railway 本番: 1, ローカル開発: 0）
+# get_client_ip() が X-Forwarded-For を正規化する際に使用する
+TRUSTED_PROXY_COUNT = int(os.environ.get("TRUSTED_PROXY_COUNT", "0"))
