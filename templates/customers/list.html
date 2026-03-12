@@ -29,10 +29,37 @@
 {#       ...                                                               #}
 {#   ]                                                                    #}
 {#                                                                         #}
-{#   page_obj      — Django Paginator page object                         #}
-{#   search_query  — current search string (from request.GET.q)           #}
-{#   status_filter — current status filter (from request.GET.status)      #}
-{#   total_count   — total number of matching records                     #}
+{#   page_obj        — Django Paginator page object                       #}
+{#   search_query    — current search string (from request.GET.q)         #}
+{#   status_filter   — current status filter (from request.GET.status)    #}
+{#   total_count     — total number of matching records                   #}
+{#                                                                         #}
+{#   Pagination URLs (computed in view — do NOT build URLs in template):  #}
+{#   prev_page_url   — URL string for previous page, or None              #}
+{#   next_page_url   — URL string for next page, or None                  #}
+{#   page_range_items — list of dicts for visible page number links:      #}
+{#       [{'number': 3, 'url': '?page=3&q=...', 'is_current': False}, …] #}
+{#                                                                         #}
+{#   View helper (example):                                               #}
+{#     from urllib.parse import urlencode                                  #}
+{#     def _page_url(page_num, q, status):                                #}
+{#         params = {'page': page_num}                                    #}
+{#         if q:      params['q'] = q                                     #}
+{#         if status: params['status'] = status                           #}
+{#         return '?' + urlencode(params)                                  #}
+{#     context['prev_page_url'] = (                                       #}
+{#         _page_url(page_obj.previous_page_number, q, status)            #}
+{#         if page_obj.has_previous else None)                            #}
+{#     context['next_page_url'] = (                                       #}
+{#         _page_url(page_obj.next_page_number, q, status)                #}
+{#         if page_obj.has_next else None)                                #}
+{#     context['page_range_items'] = [                                    #}
+{#         {'number': n,                                                   #}
+{#          'url': _page_url(n, q, status),                               #}
+{#          'is_current': n == page_obj.number}                           #}
+{#         for n in page_obj.paginator.page_range                         #}
+{#         if abs(n - page_obj.number) <= 2                               #}
+{#     ]                                                                   #}
 {# ====================================================================== #}
 
 {% block title %}Customers{% endblock %}
@@ -53,7 +80,10 @@
               flex items-center justify-center
               text-token-xs font-token-medium text-sekai-text-muted"
        aria-hidden="true">
-    {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+    {# first_name / last_name 未設定時は username の頭文字を fallback に使う #}
+    {% with fn=request.user.first_name|first|upper ln=request.user.last_name|first|upper %}
+      {% if fn or ln %}{{ fn }}{{ ln }}{% else %}{{ request.user.username|first|upper }}{% endif %}
+    {% endwith %}
   </div>
   <span class="text-token-sm text-sekai-text hidden sm:block">
     {{ request.user.get_full_name|default:request.user.username }}
@@ -89,11 +119,12 @@
 {% block page_content %}
 
 {# Page header with primary action #}
+{% url 'app:customer_create' as customer_create_url %}
 {% include "components/page_header.html" with
     title="Customers"
     description="Manage your customers and their contact details."
     button_label="Add Customer"
-    button_url="{% url 'app:customer_create' %}" %}
+    button_url=customer_create_url %}
 
 {# ------------------------------------------------------------------ #}
 {# Search and filter bar                                               #}
@@ -186,10 +217,11 @@
   {# Navigation buttons #}
   <div class="flex items-center gap-token-2">
 
-    {% if page_obj.has_previous %}
+    {# prev_page_url は view で構築済み。None のとき disabled ボタンを表示する。 #}
+    {% if prev_page_url %}
     {% include "components/button.html" with
         label="← Previous"
-        href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+        href=prev_page_url
         variant="secondary" %}
     {% else %}
     {% include "components/button.html" with
@@ -198,31 +230,32 @@
         disabled=True %}
     {% endif %}
 
-    {# Page numbers — up to 5 around current #}
+    {# page_range_items は view で構築済み。URL 組み立てはテンプレート側では行わない。 #}
     <div class="hidden sm:flex items-center gap-token-2">
-      {% for page_num in page_obj.paginator.page_range %}
-        {% if page_num == page_obj.number %}
+      {% for item in page_range_items %}
+        {% if item.is_current %}
         <span class="inline-flex items-center justify-center w-8 h-8
                      text-token-xs font-token-medium text-sekai-primary
                      bg-sekai-bg-subtle border border-sekai-border rounded-token-sm">
-          {{ page_num }}
+          {{ item.number }}
         </span>
-        {% elif page_num >= page_obj.number|add:"-2" and page_num <= page_obj.number|add:"2" %}
-        <a href="?page={{ page_num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+        {% else %}
+        <a href="{{ item.url }}"
            class="inline-flex items-center justify-center w-8 h-8
                   text-token-xs text-sekai-text-muted
                   border border-sekai-border rounded-token-sm
                   hover:bg-sekai-surface-hover transition-colors duration-100">
-          {{ page_num }}
+          {{ item.number }}
         </a>
         {% endif %}
       {% endfor %}
     </div>
 
-    {% if page_obj.has_next %}
+    {# next_page_url は view で構築済み。None のとき disabled ボタンを表示する。 #}
+    {% if next_page_url %}
     {% include "components/button.html" with
         label="Next →"
-        href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+        href=next_page_url
         variant="secondary" %}
     {% else %}
     {% include "components/button.html" with
