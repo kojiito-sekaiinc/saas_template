@@ -1,0 +1,107 @@
+{# ====================================================================== #}
+{# components/input.html                                                   #}
+{#                                                                         #}
+{# Single-field input component with label, help text, and error state.   #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   {# Text input #}                                                      #}
+{#   {% include "components/input.html" with name="email" label="Email" type="email" required=True %} #}
+{#                                                                         #}
+{#   {# Password input #}                                                  #}
+{#   {% include "components/input.html" with name="password" label="Password" type="password" %} #}
+{#                                                                         #}
+{#   {# With error #}                                                      #}
+{#   {% include "components/input.html" with name="email" label="Email" error="Enter a valid email address." %} #}
+{#                                                                         #}
+{#   {# With help text #}                                                  #}
+{#   {% include "components/input.html" with name="slug" label="Slug" help_text="Used in the page URL. Only lowercase letters and hyphens." %} #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   name         — input name attribute (required)                        #}
+{#   id           — input id (default: same as name)                       #}
+{#   type         — "text" | "password" | "email" | "number" | etc.       #}
+{#                  default: "text"                                         #}
+{#   label        — visible label text (optional)                          #}
+{#   placeholder  — placeholder text (optional)                            #}
+{#   value        — current field value (optional)                         #}
+{#   help_text    — descriptive text shown below field (optional)          #}
+{#   error        — error message; triggers error state when present       #}
+{#   required     — boolean; adds required attribute and asterisk          #}
+{#   disabled     — boolean; dims and prevents interaction                 #}
+{#   autocomplete — autocomplete attribute value (optional)                #}
+{#   extra_classes — additional classes on the input element (optional)    #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.surface           — input background                            #}
+{#   color.border            — default border                              #}
+{#   color.primary           — focus ring                                  #}
+{#   color.danger            — error border and error text                 #}
+{#   color.text              — input value text                            #}
+{#   color.text_muted        — help text                                   #}
+{#   color.text_subtle       — placeholder text                            #}
+{#   color.bg_subtle         — disabled background                         #}
+{#   font.size_sm            — input and label text                        #}
+{#   font.size_xs            — help / error text                           #}
+{#   font.weight_medium      — label weight                                #}
+{#   spacing.2 (gap), spacing.3 (px)                                       #}
+{#   radius.sm               — input corners                               #}
+{# ====================================================================== #}
+
+{% with _id=id|default:name _type=type|default:"text" %}
+
+<div class="flex flex-col gap-token-2">
+
+  {# ---- Label ---- #}
+  {% if label %}
+  <label for="{{ _id }}"
+         class="text-token-sm font-token-medium text-sekai-text leading-normal">
+    {{ label }}
+    {% if required %}
+    <span class="text-sekai-danger ml-0.5" aria-hidden="true">*</span>
+    {% endif %}
+  </label>
+  {% endif %}
+
+  {# ---- Input field ---- #}
+  <input
+    type="{{ _type }}"
+    name="{{ name }}"
+    id="{{ _id }}"
+    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+    {% if value %}value="{{ value }}"{% endif %}
+    {% if required %}required aria-required="true"{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+    {% if error %}aria-invalid="true" aria-describedby="{{ _id }}-message"{% elif help_text %}aria-describedby="{{ _id }}-message"{% endif %}
+    class="w-full px-token-3 py-token-2 text-token-sm text-sekai-text
+           bg-sekai-surface
+           border rounded-token-sm
+           leading-normal
+           placeholder:text-sekai-text-subtle
+           transition-colors duration-150
+           focus:outline-none focus:ring-2 focus:ring-offset-0
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-sekai-bg-subtle
+           {% if error %}
+             border-sekai-danger focus:border-sekai-danger focus:ring-sekai-danger-subtle
+           {% else %}
+             border-sekai-border focus:border-sekai-primary focus:ring-sekai-primary-subtle
+           {% endif %}
+           {{ extra_classes }}"
+  >
+
+  {# ---- Error message ---- #}
+  {% if error %}
+  <p id="{{ _id }}-message" class="text-token-xs text-sekai-danger leading-normal" role="alert">
+    {{ error }}
+  </p>
+
+  {# ---- Help text (shown only when no error) ---- #}
+  {% elif help_text %}
+  <p id="{{ _id }}-message" class="text-token-xs text-sekai-text-muted leading-normal">
+    {{ help_text }}
+  </p>
+  {% endif %}
+
+</div>
+
+{% endwith %}

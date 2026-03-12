@@ -1,0 +1,106 @@
+{% extends "layouts/base.html" %}
+
+{# ====================================================================== #}
+{# app_shell.html                                                          #}
+{#                                                                         #}
+{# Layout for authenticated application pages.                             #}
+{#                                                                         #}
+{# Structure:                                                               #}
+{#   Topbar  (fixed, layout.header_height = 56px)                          #}
+{#   Sidebar (fixed, layout.sidebar_width = 240px)                         #}
+{#   Main    (scrollable, max layout.content_max_width = 1200px)           #}
+{#                                                                         #}
+{# Blocks available to child templates:                                    #}
+{#   title           — <title> tag (inherited from base.html)              #}
+{#   topbar_brand    — logo / app name in topbar left                      #}
+{#   topbar_center   — optional search or nav in topbar center             #}
+{#   topbar_actions  — user menu, notifications in topbar right            #}
+{#   sidebar_nav     — primary navigation items                            #}
+{#   sidebar_footer  — bottom sidebar area (user info, settings link)      #}
+{#   page_content    — main scrollable content area                        #}
+{#   scripts         — page-level scripts (inherited from base.html)       #}
+{# ====================================================================== #}
+
+{% block content %}
+
+<div class="min-h-screen bg-sekai-bg">
+
+  {# -------------------------------------------------------------------- #}
+  {# Topbar                                                                #}
+  {# Fixed across the full viewport width.                                 #}
+  {# Height: 56px (layout.header_height)                                   #}
+  {# Border: sekai-border (color.border)                                   #}
+  {# -------------------------------------------------------------------- #}
+  <header class="fixed top-0 left-0 right-0 z-20
+                 h-topbar
+                 bg-sekai-surface border-b border-sekai-border
+                 flex items-center">
+
+    {# Left: brand / logo — width matches sidebar to create visual column alignment #}
+    <div class="flex items-center flex-shrink-0 w-sidebar px-token-6 border-r border-sekai-border h-full">
+      {% block topbar_brand %}
+      <span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+        Sekai
+      </span>
+      {% endblock %}
+    </div>
+
+    {# Center: optional search, breadcrumb, or secondary navigation #}
+    <div class="flex-1 flex items-center px-token-6">
+      {% block topbar_center %}{% endblock %}
+    </div>
+
+    {# Right: user menu, notifications, or other global actions #}
+    <div class="flex items-center gap-token-3 px-token-6">
+      {% block topbar_actions %}{% endblock %}
+    </div>
+
+  </header>
+
+  {# -------------------------------------------------------------------- #}
+  {# Below topbar: sidebar + main                                          #}
+  {# pt-topbar offsets content below the fixed header.                    #}
+  {# -------------------------------------------------------------------- #}
+  <div class="flex pt-topbar min-h-screen">
+
+    {# ------------------------------------------------------------------ #}
+    {# Sidebar                                                             #}
+    {# Fixed position, starts below topbar, full remaining height.        #}
+    {# Width: 240px (layout.sidebar_width)                                #}
+    {# Background: sekai-bg-subtle (color.bg_subtle)                      #}
+    {# ------------------------------------------------------------------ #}
+    <aside class="fixed top-topbar left-0 bottom-0 z-10
+                  w-sidebar
+                  bg-sekai-bg-subtle border-r border-sekai-border
+                  flex flex-col
+                  overflow-y-auto">
+
+      {# Primary navigation items #}
+      <nav class="flex-1 py-token-3">
+        {% block sidebar_nav %}{% endblock %}
+      </nav>
+
+      {# Bottom section: user info, settings link, or secondary actions #}
+      <div class="flex-shrink-0 border-t border-sekai-border py-token-3">
+        {% block sidebar_footer %}{% endblock %}
+      </div>
+
+    </aside>
+
+    {# ------------------------------------------------------------------ #}
+    {# Main content area                                                   #}
+    {# Offset left by sidebar width so it is never obscured.              #}
+    {# Scrolls independently of sidebar.                                  #}
+    {# Inner container capped at layout.content_max_width (1200px).       #}
+    {# ------------------------------------------------------------------ #}
+    <main class="flex-1 ml-sidebar min-h-[calc(100vh-56px)] overflow-y-auto bg-sekai-bg">
+      <div class="max-w-content mx-auto px-token-8 py-token-8">
+        {% block page_content %}{% endblock %}
+      </div>
+    </main>
+
+  </div>
+
+</div>
+
+{% endblock %}

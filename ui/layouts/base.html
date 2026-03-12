@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sekai UI{% endblock %}</title>
+
+  {# ------------------------------------------------------------------ #}
+  {# Typography: Inter (weights 400, 500, 600 — aligns with tokens.json) #}
+  {# ------------------------------------------------------------------ #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  {# ------------------------------------------------------------------ #}
+  {# Tailwind CSS                                                        #}
+  {# Development : Play CDN (no build step required)                     #}
+  {# Production  : Replace with <link> to compiled tailwind.css          #}
+  {# ------------------------------------------------------------------ #}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /**
+     * Tailwind theme extension.
+     * All values mirror design/tokens.json exactly.
+     * Do not hardcode values in templates — reference these theme keys.
+     */
+    tailwind.config = {
+      theme: {
+        extend: {
+
+          /* font.family */
+          fontFamily: {
+            sans: [
+              'Inter',
+              'ui-sans-serif',
+              'system-ui',
+              '-apple-system',
+              'BlinkMacSystemFont',
+              'Segoe UI',
+              'sans-serif',
+            ],
+          },
+
+          /* font.size_* */
+          fontSize: {
+            'token-xs': '12px',   /* font.size_xs */
+            'token-sm': '14px',   /* font.size_sm */
+            'token-md': '16px',   /* font.size_md */
+            'token-lg': '20px',   /* font.size_lg */
+            'token-xl': '24px',   /* font.size_xl */
+          },
+
+          /* font.line_height_* */
+          lineHeight: {
+            'tight':   '1.3',     /* font.line_height_tight   — headings        */
+            'normal':  '1.4',     /* font.line_height_normal  — compact UI      */
+            'relaxed': '1.6',     /* font.line_height_relaxed — body / prose    */
+          },
+
+          /* font.weight_* */
+          fontWeight: {
+            'token-normal':   '400', /* font.weight_normal   */
+            'token-medium':   '500', /* font.weight_medium   */
+            'token-semibold': '600', /* font.weight_semibold */
+          },
+
+          /* color.* */
+          colors: {
+            sekai: {
+              bg:             '#FFFFFF',   /* page / root canvas         */
+              'bg-subtle':    '#F7F7F5',   /* secondary areas, sidebar   */
+              surface:        '#FFFFFF',   /* cards, inputs, modals      */
+              'surface-hover':'#F5F5F4',   /* interactive surface hover  */
+              border:         '#E7E5E4',   /* default border             */
+              'border-strong':'#D6D3D1',   /* emphasized border          */
+              text:           '#191919',   /* primary body text          */
+              'text-muted':   '#6B7280',   /* supporting text            */
+              'text-subtle':  '#9CA3AF',   /* placeholder / metadata     */
+              primary:        '#2F6FEB',   /* primary actions, links     */
+              'primary-hover':'#1D4ED8',   /* primary element hover      */
+              'primary-subtle':'#EEF4FF',  /* focus rings, light primary bg */
+              success:        '#15803D',
+              warning:        '#B45309',
+              danger:         '#B91C1C',
+              'danger-subtle':'#FEF2F2',   /* error/danger light background */
+            },
+          },
+
+          /* spacing.* */
+          spacing: {
+            'token-2':  '8px',   /* spacing.2  */
+            'token-3':  '12px',  /* spacing.3  */
+            'token-4':  '16px',  /* spacing.4  */
+            'token-5':  '20px',  /* spacing.5  */
+            'token-6':  '24px',  /* spacing.6  */
+            'token-8':  '32px',  /* spacing.8  */
+            'token-10': '40px',  /* spacing.10 */
+            'token-12': '48px',  /* spacing.12 */
+          },
+
+          /* radius.* */
+          borderRadius: {
+            'token-sm': '6px',   /* radius.sm — inputs, tags, badges   */
+            'token-md': '8px',   /* radius.md — buttons, cards         */
+            'token-lg': '10px',  /* radius.lg — modals, large panels   */
+          },
+
+          /* shadow.* */
+          boxShadow: {
+            'token-none': 'none',
+            'token-sm':   '0 1px 2px rgba(0, 0, 0, 0.04)',
+          },
+
+          /* layout.* */
+          maxWidth: {
+            content: '1200px',  /* layout.content_max_width */
+          },
+          width: {
+            sidebar: '240px',   /* layout.sidebar_width */
+          },
+          height: {
+            topbar: '56px',     /* layout.header_height */
+          },
+        },
+      },
+    }
+  </script>
+
+  {% block head %}{% endblock %}
+</head>
+
+<body class="bg-sekai-bg text-sekai-text font-sans antialiased leading-relaxed">
+
+  {# ------------------------------------------------------------------ #}
+  {# Django messages                                                     #}
+  {# Positioned top-right, non-blocking, minimal style                  #}
+  {# ------------------------------------------------------------------ #}
+  {% if messages %}
+  <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 w-72">
+    {% for message in messages %}
+    <div class="px-4 py-3 rounded-token-md border text-token-sm leading-normal
+      {% if message.tags == 'error' %}
+        bg-red-50 border-red-200 text-red-800
+      {% elif message.tags == 'success' %}
+        bg-green-50 border-green-200 text-green-800
+      {% elif message.tags == 'warning' %}
+        bg-amber-50 border-amber-200 text-amber-800
+      {% else %}
+        bg-sekai-surface border-sekai-border text-sekai-text
+      {% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {# Main page content                                                   #}
+  {# ------------------------------------------------------------------ #}
+  {% block content %}{% endblock %}
+
+  {# ------------------------------------------------------------------ #}
+  {# Page-level scripts                                                  #}
+  {# ------------------------------------------------------------------ #}
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>

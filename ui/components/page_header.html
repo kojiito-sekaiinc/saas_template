@@ -1,0 +1,83 @@
+{# ====================================================================== #}
+{# components/page_header.html                                             #}
+{#                                                                         #}
+{# Standard page header used at the top of every application page.        #}
+{# Provides a consistent title, optional description, and optional        #}
+{# primary action button.                                                  #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   {# Minimal — title only #}                                            #}
+{#   {% include "components/page_header.html" with title="Dashboard" %} #} #}
+{#                                                                         #}
+{#   {# With description #}                                                #}
+{#   {% include "components/page_header.html" with title="Users"          #}
+{#       description="Manage team members and their access." %} #}          #}
+{#                                                                         #}
+{#   {# With primary action button #}                                      #}
+{#   {% include "components/page_header.html" with title="Users"          #}
+{#       description="Manage team members and their access."               #}
+{#       button_label="Add User" button_url="/users/new/" %} #}            #}
+{#                                                                         #}
+{#   {# With form submit action (renders a <button type="submit">) #}      #}
+{#   {% include "components/page_header.html" with title="Edit Profile"   #}
+{#       button_label="Save Changes" button_type="submit" %} #}            #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   title          — page title text (required)                           #}
+{#   description    — short descriptive text below title (optional)        #}
+{#   button_label   — action button text (optional; omit to hide button)   #}
+{#   button_url     — action button href (optional; renders <a> if set)    #}
+{#   button_type    — "button" | "submit" | "reset"  default: "button"    #}
+{#   button_variant — button variant passed to button.html                 #}
+{#                    default: "primary"                                   #}
+{#   divider        — boolean; adds border-bottom below header             #}
+{#                    default: True                                        #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.text        — page title text                                   #}
+{#   color.text_muted  — description text                                  #}
+{#   color.border      — optional bottom divider                           #}
+{#   font.size_xl      — title size                                        #}
+{#   font.size_sm      — description size                                  #}
+{#   font.weight_semibold — title weight                                   #}
+{#   spacing.2 (title-description gap)                                     #}
+{#   spacing.8 (bottom margin before page content)                         #}
+{#   line_height_tight — title                                             #}
+{#   line_height_relaxed — description                                     #}
+{# ====================================================================== #}
+
+{% with _divider=divider|default:True %}
+
+<div class="flex items-start justify-between gap-token-6
+            pb-token-6
+            {% if _divider %}border-b border-sekai-border mb-token-8{% endif %}">
+
+  {# ---- Title + description column ---- #}
+  <div class="flex flex-col gap-token-2 min-w-0">
+
+    <h1 class="text-token-xl font-token-semibold text-sekai-text leading-tight truncate">
+      {{ title }}
+    </h1>
+
+    {% if description %}
+    <p class="text-token-sm text-sekai-text-muted leading-relaxed max-w-prose">
+      {{ description }}
+    </p>
+    {% endif %}
+
+  </div>
+
+  {# ---- Optional action button ---- #}
+  {% if button_label %}
+  <div class="flex-shrink-0">
+    {% include "components/button.html" with
+        label=button_label
+        href=button_url
+        type=button_type|default:"button"
+        variant=button_variant|default:"primary" %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endwith %}

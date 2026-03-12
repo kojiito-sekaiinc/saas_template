@@ -1,0 +1,266 @@
+{% extends "layouts/app_shell.html" %}
+
+{# ====================================================================== #}
+{# examples/form.html                                                      #}
+{#                                                                         #}
+{# Reference implementation of a create/edit form page.                   #}
+{# Demonstrates: form card structure, labeled inputs, help text,           #}
+{# error states, section grouping, submit/cancel actions.                  #}
+{#                                                                         #}
+{# Works for both Create (POST to create URL) and Edit (POST to update URL). #}
+{#                                                                         #}
+{# ------------------------------------------------------------------ #}
+{# NOTE FOR REAL PROJECTS — Intermediate base template                 #}
+{#                                                                     #}
+{# In a real Django project, the repeated topbar_brand, topbar_actions, #}
+{# sidebar_nav, and sidebar_footer blocks should be defined ONCE in a  #}
+{# project-level intermediate template, for example:                   #}
+{#                                                                     #}
+{#   myapp/templates/myapp/base_app.html                               #}
+{#     {% extends "layouts/app_shell.html" %}                          #}
+{#     {% block topbar_brand %}...{% endblock %}                       #}
+{#     {% block topbar_actions %}...{% endblock %}                     #}
+{#     {% block sidebar_nav %}...{% endblock %}                        #}
+{#     {% block sidebar_footer %}...{% endblock %}                     #}
+{#                                                                     #}
+{# All page templates then extend myapp/base_app.html and only         #}
+{# override {% block page_content %}. The full block definitions below  #}
+{# are shown here for reference clarity only.                          #}
+{# ------------------------------------------------------------------ #}
+{#                                                                         #}
+{# Required view context:                                                  #}
+{#                                                                         #}
+{#   nav_items     — sidebar navigation list (see dashboard.html)          #}
+{#   current_user  — request.user                                          #}
+{#   form          — Django ModelForm or Form instance (optional;          #}
+{#                   if provided, field errors are shown automatically)    #}
+{#   instance      — model instance for edit mode (optional;               #}
+{#                   presence switches title to "Edit User")               #}
+{#   cancel_url    — URL for the Cancel button  default: "/users/"         #}
+{# ====================================================================== #}
+
+{% block title %}{% if instance %}Edit User{% else %}Add User{% endif %} — MyApp{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Topbar                                                              #}
+{# ------------------------------------------------------------------ #}
+
+{% block topbar_brand %}
+<span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+  MyApp
+</span>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="flex items-center gap-token-2 pl-token-3 border-l border-sekai-border">
+  <div class="w-7 h-7 rounded-full bg-sekai-bg-subtle border border-sekai-border
+              flex items-center justify-center
+              text-token-xs font-token-medium text-sekai-text-muted"
+       aria-hidden="true">
+    {{ current_user.first_name|first|upper }}{{ current_user.last_name|first|upper }}
+  </div>
+  <span class="text-token-sm text-sekai-text hidden sm:block">
+    {{ current_user.get_full_name|default:current_user.username }}
+  </span>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar                                                             #}
+{# ------------------------------------------------------------------ #}
+
+{% block sidebar_nav %}
+  {% include "components/sidebar.html" with items=nav_items %}
+{% endblock %}
+
+{% block sidebar_footer %}
+<div class="px-token-5">
+  <a href="{% url 'logout' %}"
+     class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
+    Sign out
+  </a>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+
+{% block page_content %}
+
+{# Page header — Back to Users ghost button keeps the header clean #}
+{% include "components/page_header.html" with
+    title=instance|yesno:"Edit User,Add User"
+    description=instance|yesno:"Update the user's profile and account settings.,Fill in the details to create a new team member."
+    button_label="← Back to Users"
+    button_url=cancel_url|default:"/users/"
+    button_variant="ghost" %}
+
+{# ------------------------------------------------------------------ #}
+{# Form — constrained to readable width                               #}
+{# ------------------------------------------------------------------ #}
+<form method="post" class="max-w-2xl" novalidate>
+  {% csrf_token %}
+
+  {# ---------------------------------------------------------------- #}
+  {# Section 1: Basic Information                                     #}
+  {# ---------------------------------------------------------------- #}
+  <div class="bg-sekai-surface border border-sekai-border rounded-token-md mb-token-5">
+
+    {# Section header #}
+    <div class="px-token-6 py-token-4 border-b border-sekai-border">
+      <h2 class="text-token-sm font-token-medium text-sekai-text">Basic Information</h2>
+      <p class="mt-0.5 text-token-xs text-sekai-text-muted">
+        The user's name and primary contact details.
+      </p>
+    </div>
+
+    {# Fields #}
+    <div class="p-token-6 flex flex-col gap-token-5">
+
+      {# First name + Last name — side by side on wider screens #}
+      <div class="grid grid-cols-1 gap-token-5 sm:grid-cols-2">
+        {% include "components/input.html" with
+            name="first_name"
+            label="First name"
+            placeholder="Alice"
+            value=instance.first_name|default:form.first_name.value
+            error=form.first_name.errors.0
+            required=True %}
+
+        {% include "components/input.html" with
+            name="last_name"
+            label="Last name"
+            placeholder="Kim"
+            value=instance.last_name|default:form.last_name.value
+            error=form.last_name.errors.0
+            required=True %}
+      </div>
+
+      {# Email #}
+      {% include "components/input.html" with
+          name="email"
+          type="email"
+          label="Email address"
+          placeholder="alice@example.com"
+          value=instance.email|default:form.email.value
+          error=form.email.errors.0
+          required=True
+          autocomplete="email" %}
+
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------------- #}
+  {# Section 2: Account Settings                                      #}
+  {# ---------------------------------------------------------------- #}
+  <div class="bg-sekai-surface border border-sekai-border rounded-token-md mb-token-5">
+
+    {# Section header #}
+    <div class="px-token-6 py-token-4 border-b border-sekai-border">
+      <h2 class="text-token-sm font-token-medium text-sekai-text">Account Settings</h2>
+      <p class="mt-0.5 text-token-xs text-sekai-text-muted">
+        Role and access level within the workspace.
+      </p>
+    </div>
+
+    {# Fields #}
+    <div class="p-token-6 flex flex-col gap-token-5">
+
+      {# Role — select field, styled to match input.html #}
+      <div class="flex flex-col gap-token-2">
+        <label for="role" class="text-token-sm font-token-medium text-sekai-text leading-normal">
+          Role <span class="text-sekai-danger ml-0.5" aria-hidden="true">*</span>
+        </label>
+        <select id="role" name="role" required
+                class="w-full px-token-3 py-token-2
+                       text-token-sm text-sekai-text
+                       bg-sekai-surface border border-sekai-border rounded-token-sm
+                       leading-normal
+                       focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-sekai-primary focus:ring-sekai-primary-subtle
+                       transition-colors duration-150
+                       {% if form.role.errors %}border-sekai-danger focus:border-sekai-danger focus:ring-sekai-danger-subtle{% endif %}">
+          <option value="" disabled {% if not instance %}selected{% endif %}>Select a role…</option>
+          <option value="admin"  {% if instance.role == 'admin'  or form.role.value == 'admin'  %}selected{% endif %}>Admin</option>
+          <option value="member" {% if instance.role == 'member' or form.role.value == 'member' %}selected{% endif %}>Member</option>
+          <option value="viewer" {% if instance.role == 'viewer' or form.role.value == 'viewer' %}selected{% endif %}>Viewer</option>
+        </select>
+        {% if form.role.errors %}
+        <p class="text-token-xs text-sekai-danger leading-normal" role="alert">{{ form.role.errors.0 }}</p>
+        {% else %}
+        <p class="text-token-xs text-sekai-text-muted leading-normal">
+          Admins can manage all workspace settings. Members can create and edit content. Viewers have read-only access.
+        </p>
+        {% endif %}
+      </div>
+
+      {# Department — optional free-text field #}
+      {% include "components/input.html" with
+          name="department"
+          label="Department"
+          placeholder="e.g. Engineering, Design, Product"
+          value=instance.department|default:form.department.value
+          error=form.department.errors.0
+          help_text="Used for filtering and reporting. Leave blank if not applicable." %}
+
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------------- #}
+  {# Section 3: Security (create mode only)                          #}
+  {# ---------------------------------------------------------------- #}
+  {% if not instance %}
+  <div class="bg-sekai-surface border border-sekai-border rounded-token-md mb-token-5">
+
+    <div class="px-token-6 py-token-4 border-b border-sekai-border">
+      <h2 class="text-token-sm font-token-medium text-sekai-text">Security</h2>
+      <p class="mt-0.5 text-token-xs text-sekai-text-muted">
+        Set an initial password for this account.
+      </p>
+    </div>
+
+    <div class="p-token-6 flex flex-col gap-token-5">
+
+      {% include "components/input.html" with
+          name="password1"
+          type="password"
+          label="Password"
+          error=form.password1.errors.0
+          required=True
+          autocomplete="new-password"
+          help_text="Minimum 8 characters. Use a mix of letters, numbers, and symbols." %}
+
+      {% include "components/input.html" with
+          name="password2"
+          type="password"
+          label="Confirm password"
+          error=form.password2.errors.0
+          required=True
+          autocomplete="new-password" %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  {# ---------------------------------------------------------------- #}
+  {# Form actions                                                     #}
+  {# Primary: Save / Secondary: Cancel                               #}
+  {# Rule: only one primary button per section (AI_RULES.md §8)      #}
+  {# ---------------------------------------------------------------- #}
+  <div class="flex items-center gap-token-3 pt-token-2">
+
+    {% include "components/button.html" with
+        label=instance|yesno:"Save Changes,Add User"
+        type="submit"
+        variant="primary" %}
+
+    {% include "components/button.html" with
+        label="Cancel"
+        href=cancel_url|default:"/users/"
+        variant="ghost" %}
+
+  </div>
+
+</form>
+
+{% endblock %}

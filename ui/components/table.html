@@ -1,0 +1,177 @@
+{# ====================================================================== #}
+{# components/table.html                                                   #}
+{#                                                                         #}
+{# Data table with header row, body rows, row hover, and optional         #}
+{# right-aligned actions column.                                           #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   In your Django view:                                                   #}
+{#                                                                         #}
+{#     headers = ['Name', 'Email', 'Role', 'Status']                       #}
+{#     rows = [                                                             #}
+{#         {                                                                #}
+{#             'cells': ['Alice', 'alice@example.com', 'Admin', 'Active'], #}
+{#             'actions': [                                                  #}
+{#                 {'label': 'Edit', 'url': '/users/1/edit/'},              #}
+{#                 {'label': 'Delete', 'url': '/users/1/delete/', 'danger': True}, #}
+{#             ],                                                            #}
+{#         },                                                               #}
+{#     ]                                                                    #}
+{#                                                                         #}
+{#   In your template:                                                      #}
+{#   {% include "components/table.html" with headers=headers rows=rows %} #}
+{#                                                                         #}
+{#   Embedded inside a card (no double border):                            #}
+{#   {% include "components/table.html" with headers=headers rows=rows     #}
+{#       borderless=True %}                                                 #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   headers         — list of column header strings (required)            #}
+{#                     Must be a Python list from the view context.        #}
+{#                     Do not pass a raw string with |make_list.           #}
+{#   rows            — list of row dicts (required):                       #}
+{#                       cells   — list of cell values (strings or safe HTML) #}
+{#                       actions — list of action dicts (optional):        #}
+{#                                   label  — action link text             #}
+{#                                   url    — action href                  #}
+{#                                   danger — boolean; red text if True    #}
+{#   borderless      — boolean; when True, omits the outer border and      #}
+{#                     border-radius so the table can sit flush inside a   #}
+{#                     card container without double borders.              #}
+{#                     default: False                                       #}
+{#   show_actions    — boolean; force show the actions column header even  #}
+{#                     when the first row has no actions.                  #}
+{#                     Auto-detected from rows.0.actions when omitted.    #}
+{#   actions_label   — actions column header text                          #}
+{#                     default: "" (empty — actions columns have no label  #}
+{#                     by convention in this system)                       #}
+{#   empty_message   — text shown when rows is empty                       #}
+{#                     default: "No data to display."                      #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.bg_subtle      — table header background                        #}
+{#   color.surface        — table body background                          #}
+{#   color.surface_hover  — row hover background                           #}
+{#   color.border         — row separator and outer border                 #}
+{#   color.text           — cell text                                      #}
+{#   color.text_muted     — header text                                    #}
+{#   color.text_subtle    — empty state text                               #}
+{#   color.primary        — action link text                               #}
+{#   color.primary_hover  — action link hover text                         #}
+{#   color.danger         — danger action link text                        #}
+{#   font.size_xs         — header text                                    #}
+{#   font.size_sm         — cell text                                      #}
+{#   font.weight_medium   — header weight                                  #}
+{#   spacing.4 (px) | spacing.3 (py) — cell padding                       #}
+{#   spacing.10 — empty state vertical padding                             #}
+{# ====================================================================== #}
+
+{% with _empty=empty_message|default:"No data to display." _borderless=borderless|default:False %}
+{% with _has_actions=rows.0.actions _show_actions=show_actions|default:False %}
+
+{# ------------------------------------------------------------------ #}
+{# Outer wrapper                                                        #}
+{# borderless=True: no border/radius — for embedding inside a card.    #}
+{# borderless=False (default): standalone table with own border.       #}
+{# ------------------------------------------------------------------ #}
+{% if _borderless %}
+<div class="w-full overflow-x-auto">
+{% else %}
+<div class="w-full overflow-x-auto rounded-token-md border border-sekai-border">
+{% endif %}
+
+  <table class="w-full border-collapse text-left">
+
+    {# ---------------------------------------------------------------- #}
+    {# Header row                                                        #}
+    {# Background: bg-sekai-bg-subtle (color.bg_subtle)                 #}
+    {# Text: text-sekai-text-muted, uppercase tracking for clarity      #}
+    {# ---------------------------------------------------------------- #}
+    <thead class="bg-sekai-bg-subtle border-b border-sekai-border">
+      <tr>
+        {% for header in headers %}
+        <th scope="col"
+            class="px-token-4 py-token-3
+                   text-token-xs font-token-medium text-sekai-text-muted
+                   tracking-wide uppercase
+                   whitespace-nowrap">
+          {{ header }}
+        </th>
+        {% endfor %}
+
+        {# Actions column header — shown when rows contain actions #}
+        {# By convention the header label is empty; right-alignment signals purpose. #}
+        {% if _show_actions or _has_actions %}
+        <th scope="col"
+            class="px-token-4 py-token-3
+                   text-token-xs font-token-medium text-sekai-text-muted
+                   tracking-wide uppercase
+                   text-right whitespace-nowrap">
+          {{ actions_label }}
+        </th>
+        {% endif %}
+      </tr>
+    </thead>
+
+    {# ---------------------------------------------------------------- #}
+    {# Body rows                                                         #}
+    {# ---------------------------------------------------------------- #}
+    <tbody class="bg-sekai-surface divide-y divide-sekai-border">
+
+      {% if rows %}
+        {% for row in rows %}
+        <tr class="transition-colors duration-100 hover:bg-sekai-surface-hover">
+
+          {# Data cells #}
+          {% for cell in row.cells %}
+          <td class="px-token-4 py-token-3
+                     text-token-sm text-sekai-text
+                     leading-normal whitespace-nowrap">
+            {{ cell }}
+          </td>
+          {% endfor %}
+
+          {# Actions cell — right-aligned #}
+          {% if _show_actions or _has_actions %}
+          <td class="px-token-4 py-token-3 text-right whitespace-nowrap">
+            {% if row.actions %}
+            <div class="inline-flex items-center gap-token-4">
+              {% for action in row.actions %}
+              <a href="{{ action.url }}"
+                 class="text-token-xs font-token-medium
+                        transition-colors duration-100
+                        {% if action.danger %}
+                          text-sekai-danger hover:opacity-75
+                        {% else %}
+                          text-sekai-primary hover:text-sekai-primary-hover
+                        {% endif %}">
+                {{ action.label }}
+              </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </td>
+          {% endif %}
+
+        </tr>
+        {% endfor %}
+
+      {% else %}
+        {# ---- Empty state ---- #}
+        {# colspan adds 1 only when the actions column is actually rendered. #}
+        <tr>
+          <td colspan="{% if _show_actions or _has_actions %}{{ headers|length|add:1 }}{% else %}{{ headers|length }}{% endif %}"
+              class="px-token-4 py-token-10
+                     text-center text-token-sm text-sekai-text-subtle">
+            {{ _empty }}
+          </td>
+        </tr>
+      {% endif %}
+
+    </tbody>
+
+  </table>
+</div>
+
+{% endwith %}
+{% endwith %}

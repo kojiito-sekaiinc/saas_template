@@ -1,0 +1,69 @@
+{% extends "layouts/base.html" %}
+
+{# ====================================================================== #}
+{# auth.html                                                               #}
+{#                                                                         #}
+{# Layout for authentication pages:                                        #}
+{#   - Login                                                               #}
+{#   - Register                                                            #}
+{#   - Password reset / confirm                                            #}
+{#                                                                         #}
+{# Structure:                                                               #}
+{#   Full-height centered container on a subtle background                 #}
+{#   Narrow card with border and comfortable padding                       #}
+{#                                                                         #}
+{# Blocks available to child templates:                                    #}
+{#   title        — <title> tag (inherited from base.html)                 #}
+{#   brand        — optional logo or app name above the card               #}
+{#   auth_content — form and copy inside the card                          #}
+{#   auth_footer  — optional link row below the card (e.g. "Sign up")     #}
+{#   scripts      — page-level scripts (inherited from base.html)          #}
+{# ====================================================================== #}
+
+{% block content %}
+
+{# ------------------------------------------------------------------ #}
+{# Full-height centered stage                                          #}
+{# Background: sekai-bg-subtle (color.bg_subtle = #F7F7F5)            #}
+{# Subtle warm gray distinguishes the auth page from app pages.       #}
+{# ------------------------------------------------------------------ #}
+<div class="min-h-screen bg-sekai-bg-subtle flex flex-col items-center justify-center px-token-4 py-token-12">
+
+  {# Constrain to a narrow column matching common auth form widths #}
+  <div class="w-full max-w-sm">
+
+    {# ---------------------------------------------------------------- #}
+    {# Brand / logo area                                                #}
+    {# Appears above the card. Override this block to add a logo.      #}
+    {# ---------------------------------------------------------------- #}
+    <div class="mb-token-6 text-center">
+      {% block brand %}
+      <span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+        Sekai
+      </span>
+      {% endblock %}
+    </div>
+
+    {# ---------------------------------------------------------------- #}
+    {# Auth card                                                        #}
+    {# Background: sekai-surface (color.surface = #FFFFFF)             #}
+    {# Border: sekai-border (color.border)                             #}
+    {# Radius: token-md (radius.md = 8px)                              #}
+    {# Shadow: token-sm (minimal, 0 1px 2px rgba — not decorative)     #}
+    {# Padding: token-8 (spacing.8 = 32px)                             #}
+    {# ---------------------------------------------------------------- #}
+    <div class="bg-sekai-surface border border-sekai-border rounded-token-md shadow-token-sm px-token-8 py-token-8">
+      {% block auth_content %}{% endblock %}
+    </div>
+
+    {# ---------------------------------------------------------------- #}
+    {# Below-card footer row                                            #}
+    {# Typically used for "Don't have an account? Sign up" links.      #}
+    {# ---------------------------------------------------------------- #}
+    {% block auth_footer %}{% endblock %}
+
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "layouts/app_shell.html" %}
+
+{# ====================================================================== #}
+{# examples/dashboard.html                                                 #}
+{#                                                                         #}
+{# Reference implementation of a SaaS dashboard page.                     #}
+{# Demonstrates: stat cards, recent activity table, sidebar navigation.   #}
+{#                                                                         #}
+{# ------------------------------------------------------------------ #}
+{# NOTE FOR REAL PROJECTS — Intermediate base template                 #}
+{#                                                                     #}
+{# In a real Django project, the repeated topbar_brand, topbar_actions, #}
+{# sidebar_nav, and sidebar_footer blocks should be defined ONCE in a  #}
+{# project-level intermediate template, for example:                   #}
+{#                                                                     #}
+{#   myapp/templates/myapp/base_app.html                               #}
+{#     {% extends "layouts/app_shell.html" %}                          #}
+{#     {% block topbar_brand %}...{% endblock %}                       #}
+{#     {% block topbar_actions %}...{% endblock %}                     #}
+{#     {% block sidebar_nav %}...{% endblock %}                        #}
+{#     {% block sidebar_footer %}...{% endblock %}                     #}
+{#                                                                     #}
+{# All page templates then extend myapp/base_app.html and only         #}
+{# override {% block page_content %}. The full block definitions below  #}
+{# are shown here for reference clarity only.                          #}
+{# ------------------------------------------------------------------ #}
+{#                                                                         #}
+{# Required view context:                                                  #}
+{#                                                                         #}
+{#   nav_items = [                                                          #}
+{#       {'label': 'Dashboard', 'url': '/dashboard/', 'active': True},     #}
+{#       {'label': 'Users',     'url': '/users/'},                         #}
+{#       {'label': 'Projects',  'url': '/projects/'},                      #}
+{#       {'label': 'Analytics', 'url': '/analytics/'},                     #}
+{#       {'type': 'separator'},                                             #}
+{#       {'label': 'Settings',  'url': '/settings/'},                      #}
+{#   ]                                                                     #}
+{#                                                                         #}
+{#   current_user = request.user                                           #}
+{#                                                                         #}
+{#   activity_headers = ['User', 'Action', 'Role', 'Time']                 #}
+{#   activity_rows = [                                                      #}
+{#       {                                                                  #}
+{#           'cells': ['Alice Kim', 'Created project "Apollo"', 'Admin', '2 min ago'], #}
+{#           'actions': [{'label': 'View', 'url': '/activity/1/'}],        #}
+{#       },                                                                 #}
+{#       ...                                                                #}
+{#   ]                                                                     #}
+{#                                                                         #}
+{#   quick_links = [                                                        #}
+{#       {'label': 'API Documentation', 'url': '/docs/'},                  #}
+{#       {'label': 'Billing',           'url': '/billing/'},               #}
+{#   ]  (optional — empty state shown when missing)                        #}
+{# ====================================================================== #}
+
+{% block title %}Dashboard — MyApp{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Topbar                                                              #}
+{# ------------------------------------------------------------------ #}
+
+{% block topbar_brand %}
+<span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+  MyApp
+</span>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="flex items-center gap-token-3">
+  {# Notification indicator #}
+  <button type="button"
+          class="relative w-8 h-8 flex items-center justify-center
+                 rounded-token-sm text-sekai-text-muted
+                 hover:bg-sekai-surface-hover transition-colors duration-100"
+          aria-label="Notifications">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+    </svg>
+  </button>
+
+  {# User avatar / name #}
+  <div class="flex items-center gap-token-2 pl-token-3 border-l border-sekai-border">
+    <div class="w-7 h-7 rounded-full bg-sekai-bg-subtle border border-sekai-border
+                flex items-center justify-center
+                text-token-xs font-token-medium text-sekai-text-muted"
+         aria-hidden="true">
+      {{ current_user.first_name|first|upper }}{{ current_user.last_name|first|upper }}
+    </div>
+    <span class="text-token-sm text-sekai-text hidden sm:block">
+      {{ current_user.get_full_name|default:current_user.username }}
+    </span>
+  </div>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar                                                             #}
+{# ------------------------------------------------------------------ #}
+
+{% block sidebar_nav %}
+  {% include "components/sidebar.html" with items=nav_items %}
+{% endblock %}
+
+{% block sidebar_footer %}
+{# px-token-5 (20px) matches the effective indent of nav items (px-token-3 container + px-token-2 item = 20px). #}
+<div class="px-token-5">
+  <a href="{% url 'logout' %}"
+     class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
+    Sign out
+  </a>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+
+{% block page_content %}
+
+{# Page header #}
+{% include "components/page_header.html" with
+    title="Dashboard"
+    description="An overview of your workspace activity and key metrics." %}
+
+{# ------------------------------------------------------------------ #}
+{# Stat cards — 4-column responsive grid                              #}
+{# Each card uses the stat mode of card.html.                         #}
+{# ------------------------------------------------------------------ #}
+<div class="grid grid-cols-1 gap-token-5 sm:grid-cols-2 xl:grid-cols-4 mb-token-8">
+
+  {% include "components/card.html" with
+      card_title="Total Users"
+      stat_value="1,204"
+      stat_label="↑ 12% from last month" %}
+
+  {% include "components/card.html" with
+      card_title="Active Projects"
+      stat_value="38"
+      stat_label="4 added this week" %}
+
+  {% include "components/card.html" with
+      card_title="Monthly Revenue"
+      stat_value="$24,800"
+      stat_label="↑ 8% from last month" %}
+
+  {% include "components/card.html" with
+      card_title="Open Tasks"
+      stat_value="71"
+      stat_label="12 due today" %}
+
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Recent activity table                                               #}
+{# ------------------------------------------------------------------ #}
+{# The table is embedded inside a card container.                     #}
+{# borderless=True prevents the double border that would occur if      #}
+{# table.html rendered its own outer border inside the card's border. #}
+{# activity_headers and activity_rows must be Python lists from the   #}
+{# view context — see the context documentation at the top of this    #}
+{# file. Do not construct headers inline with |make_list.             #}
+{# ------------------------------------------------------------------ #}
+<div class="bg-sekai-surface border border-sekai-border rounded-token-md">
+
+  {# Card header with ghost action link #}
+  <div class="flex items-center justify-between px-token-6 py-token-4 border-b border-sekai-border">
+    <div>
+      <h2 class="text-token-sm font-token-medium text-sekai-text">Recent Activity</h2>
+      <p class="mt-0.5 text-token-xs text-sekai-text-muted">Latest actions across your workspace</p>
+    </div>
+    {% include "components/button.html" with
+        label="View all"
+        href="/activity/"
+        variant="ghost" %}
+  </div>
+
+  {# Table sits flush inside the card — borderless=True removes double border. #}
+  <div class="overflow-x-auto">
+    {% include "components/table.html" with
+        headers=activity_headers
+        rows=activity_rows
+        empty_message="No recent activity."
+        borderless=True %}
+  </div>
+
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Secondary row: two info cards side by side                         #}
+{# ------------------------------------------------------------------ #}
+<div class="grid grid-cols-1 gap-token-5 sm:grid-cols-2 mt-token-5">
+
+  {# Quick links card #}
+  <div class="bg-sekai-surface border border-sekai-border rounded-token-md p-token-6">
+    <h2 class="text-token-sm font-token-medium text-sekai-text mb-token-4">Quick Links</h2>
+    <ul class="flex flex-col gap-token-2">
+      {% for link in quick_links %}
+      <li>
+        <a href="{{ link.url }}"
+           class="text-token-sm text-sekai-primary hover:text-sekai-primary-hover transition-colors duration-100">
+          {{ link.label }}
+        </a>
+      </li>
+      {% empty %}
+      <li class="text-token-sm text-sekai-text-subtle">No quick links configured.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {# System status card #}
+  <div class="bg-sekai-surface border border-sekai-border rounded-token-md p-token-6">
+    <h2 class="text-token-sm font-token-medium text-sekai-text mb-token-4">System Status</h2>
+    <ul class="flex flex-col gap-token-3">
+      <li class="flex items-center justify-between">
+        <span class="text-token-sm text-sekai-text-muted">API</span>
+        <span class="text-token-xs font-token-medium text-sekai-success">Operational</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="text-token-sm text-sekai-text-muted">Database</span>
+        <span class="text-token-xs font-token-medium text-sekai-success">Operational</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="text-token-sm text-sekai-text-muted">Storage</span>
+        <span class="text-token-xs font-token-medium text-sekai-success">Operational</span>
+      </li>
+      <li class="flex items-center justify-between">
+        <span class="text-token-sm text-sekai-text-muted">Email</span>
+        <span class="text-token-xs font-token-medium text-sekai-warning">Degraded</span>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+{% endblock %}

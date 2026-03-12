@@ -1,0 +1,126 @@
+{# ====================================================================== #}
+{# components/card.html                                                    #}
+{#                                                                         #}
+{# Content grouping card with optional header and footer.                  #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   {# Stat / metric card #}                                              #}
+{#   {% include "components/card.html" with card_title="Total Users" stat_value="1,204" stat_label="vs last month +12%" %} #}
+{#                                                                         #}
+{#   {# Content card with arbitrary body HTML #}                           #}
+{#   {% include "components/card.html" with card_title="Profile" body_html=profile_html %} #}
+{#                                                                         #}
+{#   {# Simple card — no header #}                                         #}
+{#   {% include "components/card.html" with body_html=content_html %} #}   #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   card_title       — header title text (optional)                       #}
+{#   card_description — subtitle below the header title (optional)         #}
+{#   stat_value       — large metric value for stat cards (optional)       #}
+{#   stat_label       — secondary label below stat_value (optional)        #}
+{#   body_html        — arbitrary HTML body content, rendered with |safe   #}
+{#                      (optional; use with trusted server-rendered data)  #}
+{#   footer_html      — arbitrary HTML footer content (optional)           #}
+{#   padding          — "sm" (p-4) | "md" (p-6, default) | "lg" (p-8)     #}
+{#   shadow           — boolean; adds shadow-token-sm when True            #}
+{#                      default: False (no shadow)                         #}
+{#   extra_classes    — additional classes on the outer container          #}
+{#                                                                         #}
+{# Template inheritance pattern (for complex body content):                #}
+{# Instead of body_html, wrap card styles directly in the page template:   #}
+{#   <div class="bg-sekai-surface border border-sekai-border              #}
+{#               rounded-token-md p-token-6">                              #}
+{#     {# your content here #}                                             #}
+{#   </div>                                                                 #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.surface       — card background                                 #}
+{#   color.border        — card border                                     #}
+{#   color.text          — title and stat value text                       #}
+{#   color.text_muted    — description and stat label text                 #}
+{#   font.size_sm        — description text                                #}
+{#   font.size_xl        — stat value                                      #}
+{#   font.weight_medium  — card title weight                               #}
+{#   font.weight_semibold — stat value weight                              #}
+{#   spacing.4 (sm padding) | spacing.6 (md) | spacing.8 (lg)             #}
+{#   radius.md           — card corners                                    #}
+{#   shadow.sm / shadow.none                                               #}
+{# ====================================================================== #}
+
+{% with _pad=padding|default:"md" %}
+
+<div class="bg-sekai-surface border border-sekai-border rounded-token-md
+            {% if shadow %}shadow-token-sm{% else %}shadow-token-none{% endif %}
+            {{ extra_classes }}">
+
+  {# ------------------------------------------------------------------ #}
+  {# Optional header                                                     #}
+  {# ------------------------------------------------------------------ #}
+  {% if card_title %}
+  <div class="flex items-start justify-between
+              {% if _pad == 'sm' %}px-token-4 py-token-3
+              {% elif _pad == 'lg' %}px-token-8 py-token-6
+              {% else %}px-token-6 py-token-4
+              {% endif %}
+              border-b border-sekai-border">
+    <div>
+      <h3 class="text-token-sm font-token-medium text-sekai-text leading-normal">
+        {{ card_title }}
+      </h3>
+      {% if card_description %}
+      {# mt-0.5 (2px) — intentional micro-spacing for tight header subtext #}
+      <p class="mt-0.5 text-token-xs text-sekai-text-muted leading-normal">
+        {{ card_description }}
+      </p>
+      {% endif %}
+    </div>
+    {# Slot for header actions — extend the card styles inline in the page template #}
+  </div>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {# Card body                                                           #}
+  {# ------------------------------------------------------------------ #}
+  <div class="{% if _pad == 'sm' %}p-token-4
+              {% elif _pad == 'lg' %}p-token-8
+              {% else %}p-token-6
+              {% endif %}">
+
+    {# Stat / metric display #}
+    {% if stat_value %}
+    <div>
+      <p class="text-token-xl font-token-semibold text-sekai-text leading-tight">
+        {{ stat_value }}
+      </p>
+      {% if stat_label %}
+      <p class="mt-token-2 text-token-xs text-sekai-text-muted leading-normal">
+        {{ stat_label }}
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Arbitrary body HTML #}
+    {% if body_html %}
+    {{ body_html|safe }}
+    {% endif %}
+
+  </div>
+
+  {# ------------------------------------------------------------------ #}
+  {# Optional footer                                                     #}
+  {# ------------------------------------------------------------------ #}
+  {% if footer_html %}
+  <div class="{% if _pad == 'sm' %}px-token-4 py-token-3
+              {% elif _pad == 'lg' %}px-token-8 py-token-5
+              {% else %}px-token-6 py-token-4
+              {% endif %}
+              border-t border-sekai-border
+              text-token-xs text-sekai-text-muted">
+    {{ footer_html|safe }}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endwith %}
