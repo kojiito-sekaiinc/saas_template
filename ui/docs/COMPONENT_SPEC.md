@@ -74,13 +74,14 @@ All UI components must be placed inside the `components` directory.
 
 Example structure:
 
-components/  
-button.html  
-input.html  
-card.html  
-table.html  
-sidebar.html  
-page_header.html  
+components/
+button.html
+input.html
+select.html
+card.html
+table.html
+sidebar.html
+page_header.html
 
 Each file should contain one primary component.
 
@@ -187,7 +188,26 @@ Error states must be visually clear.
 
 ---
 
-# 9. Card Component Specification
+# 9. Select Component Specification
+
+Select components share the visual design and variable API of the input component.
+
+Choices are provided as a list of dicts from the view context:
+
+- `value` — option value attribute
+- `label` — visible option text
+- `disabled` — boolean; makes the option non-selectable
+
+Rules:
+
+- matches input.html in border, focus ring, background, and spacing
+- `selected_value` is compared as a string on both sides to avoid type mismatch between integer model values and string GET parameters
+- optional error state and help text, using the same markup as input.html
+- use select.html in preference to an inline `<select>` element whenever this component covers the requirement
+
+---
+
+# 10. Card Component Specification
 
 Card components are used for grouping content.
 
@@ -208,7 +228,7 @@ Cards should not include excessive visual decoration.
 
 ---
 
-# 10. Table Component Specification
+# 11. Table Component Specification
 
 Tables are used for displaying structured data.
 
@@ -225,7 +245,7 @@ Tables should remain visually light.
 
 ---
 
-# 11. Sidebar Component Specification
+# 12. Sidebar Component Specification
 
 The sidebar is used for application navigation.
 
@@ -242,7 +262,7 @@ Avoid excessive nesting of navigation items.
 
 ---
 
-# 12. Page Header Component Specification
+# 13. Page Header Component Specification
 
 The page header provides context for each page.
 
@@ -258,7 +278,7 @@ It should clearly communicate the page purpose.
 
 ---
 
-# 13. Component Variants
+# 14. Component Variants
 
 Variants should be limited.
 
@@ -274,7 +294,7 @@ settings_card
 
 ---
 
-# 14. Accessibility Considerations
+# 15. Accessibility Considerations
 
 Components must maintain basic accessibility principles.
 
@@ -289,7 +309,7 @@ Accessibility should not rely on color alone.
 
 ---
 
-# 15. AI Development Workflow
+# 16. AI Development Workflow
 
 When generating components with AI:
 
@@ -313,7 +333,7 @@ Create new components only when necessary.
 
 ---
 
-# 16. Expected Component Qualities
+# 17. Expected Component Qualities
 
 Every component in Sekai UI System should be:
 

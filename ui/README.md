@@ -14,7 +14,7 @@ It provides:
 - **Layout templates** — reusable Django template shells for authenticated app pages and auth flows
 - **UI components** — minimal, composable HTML components styled with Tailwind CSS
 - **Example screens** — reference pages for dashboards, list views, and forms
-- **AI prompts** — system prompts and generation prompts for Claude and other AI agents
+- **AI rules** — rules and guidelines for AI agents generating UI in this system (`AI_RULES.md`)
 
 The system is optimized for:
 
@@ -60,6 +60,7 @@ For full details, see [design/design-principles.md](design/design-principles.md)
 ```
 sekai-ui-system/
 ├── README.md                        # This file
+├── AI_RULES.md                      # Rules for AI agents generating UI in this system
 │
 ├── design/
 │   ├── tokens.json                  # Design tokens (colors, spacing, typography, etc.)
@@ -68,18 +69,12 @@ sekai-ui-system/
 ├── docs/
 │   ├── sekai-ui-system-spec.md      # Full system specification
 │   ├── COMPONENT_SPEC.md            # Component design and implementation rules
-│   ├── usage.md                     # General usage guide
-│   ├── django-integration.md        # Django-specific integration guide
-│   └── figma-to-code.md             # Figma to code workflow
-│
-├── prompts/
-│   ├── claude-system-prompt.md      # System prompt for AI-assisted development
-│   ├── component-generation-prompt.md
-│   └── page-generation-prompt.md
+│   └── UI_EXAMPLES.md               # UI pattern examples and guidelines
 │
 ├── components/
 │   ├── button.html                  # Button variants (primary, secondary, ghost, danger)
 │   ├── input.html                   # Text input with optional error state
+│   ├── select.html                  # Select dropdown with optional error state
 │   ├── card.html                    # Content grouping card
 │   ├── table.html                   # Data table with hover and action columns
 │   ├── sidebar.html                 # Vertical navigation sidebar
@@ -90,15 +85,10 @@ sekai-ui-system/
 │   ├── app_shell.html               # Authenticated app layout (topbar + sidebar + content)
 │   └── auth.html                    # Centered auth layout (login, register, reset)
 │
-├── examples/
-│   ├── dashboard.html               # Dashboard with stat cards and activity table
-│   ├── list.html                    # List page with search, table, and pagination
-│   └── form.html                    # Form page with inputs and submit actions
-│
-├── figma/
-│   └── figma-structure.md           # Figma file organization guide
-│
-└── AI_RULES.md                      # Rules for AI agents generating UI in this system
+└── examples/
+    ├── dashboard.html               # Dashboard with stat cards and activity table
+    ├── list.html                    # List page with search, table, and pagination
+    └── form.html                    # Form page with inputs and submit actions
 ```
 
 ---
@@ -132,6 +122,7 @@ Implements the core reusable UI components.
 Files:
 - `components/button.html`
 - `components/input.html`
+- `components/select.html`
 - `components/card.html`
 - `components/table.html`
 - `components/sidebar.html`
@@ -176,40 +167,65 @@ Extend `app_shell.html` for authenticated pages:
 ```django
 {% extends "layouts/app_shell.html" %}
 
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}Dashboard — MyApp{% endblock %}
 
-{% block content %}
+{% block topbar_brand %}<span>MyApp</span>{% endblock %}
+{% block sidebar_nav %}{% include "components/sidebar.html" with items=nav_items %}{% endblock %}
+
+{% block page_content %}
   {% include "components/page_header.html" with title="Dashboard" %}
   {# page content #}
 {% endblock %}
 ```
+
+Available blocks in `app_shell.html`: `title`, `topbar_brand`, `topbar_center` (hidden on mobile — do not place mobile-required content here), `topbar_actions`, `sidebar_nav`, `sidebar_footer`, `page_content`, `scripts`.
 
 Extend `auth.html` for login and registration pages:
 
 ```django
 {% extends "layouts/auth.html" %}
 
-{% block content %}
+{% block title %}Sign in — MyApp{% endblock %}
+
+{% block brand %}<span>MyApp</span>{% endblock %}
+
+{% block auth_content %}
   <h1>Sign in</h1>
   {# auth form #}
 {% endblock %}
+
+{% block auth_footer %}
+  {# e.g. "Don't have an account? Sign up" #}
+{% endblock %}
 ```
+
+Available blocks in `auth.html`: `title`, `brand`, `auth_content`, `auth_footer`, `scripts`.
 
 ### Using Components
 
 Include components with `{% include %}` and pass context variables:
 
 ```django
-{% include "components/card.html" with title="Total Users" value="1,204" %}
+{% include "components/card.html" with card_title="Total Users" stat_value="1,204" stat_label="↑ 12% from last month" %}
 
 {% include "components/button.html" with label="Save" variant="primary" %}
+```
+
+The table component requires `show_actions=True` to display the actions column. The column is hidden by default regardless of whether row data contains action links:
+
+```django
+{# Actions column hidden (default) #}
+{% include "components/table.html" with headers=table_headers rows=table_rows %}
+
+{# Actions column visible #}
+{% include "components/table.html" with headers=table_headers rows=table_rows show_actions=True %}
 ```
 
 ### Design Token Reference
 
 All visual values are defined in `design/tokens.json`. When writing custom Tailwind classes, align values with the token scale. Do not introduce arbitrary color or spacing values outside the defined tokens.
 
-For a full integration walkthrough, see [docs/django-integration.md](docs/django-integration.md).
+For component API details, refer to the inline documentation at the top of each template file.
 
 ---
 

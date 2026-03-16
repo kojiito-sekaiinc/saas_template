@@ -39,14 +39,22 @@
 {#                     border-radius so the table can sit flush inside a   #}
 {#                     card container without double borders.              #}
 {#                     default: False                                       #}
-{#   show_actions    — boolean; force show the actions column header even  #}
-{#                     when the first row has no actions.                  #}
-{#                     Auto-detected from rows.0.actions when omitted.    #}
+{#   show_actions    — boolean; show the actions column.                   #}
+{#                     Must be set explicitly to True when row actions     #}
+{#                     are present. Default: False (no actions column).    #}
+{#                     There is no auto-detection — omitting this flag     #}
+{#                     always hides the actions column.                   #}
 {#   actions_label   — actions column header text                          #}
 {#                     default: "" (empty — actions columns have no label  #}
 {#                     by convention in this system)                       #}
 {#   empty_message   — text shown when rows is empty                       #}
 {#                     default: "No data to display."                      #}
+{#                                                                         #}
+{# Mobile / responsive:                                                    #}
+{#   The outer wrapper always carries overflow-x-auto so the table        #}
+{#   scrolls horizontally on narrow viewports rather than breaking the    #}
+{#   page layout. Row data is not reflowed into cards. This is the        #}
+{#   official small-screen strategy for this component.                   #}
 {#                                                                         #}
 {# Design tokens used:                                                     #}
 {#   color.bg_subtle      — table header background                        #}
@@ -67,7 +75,7 @@
 {# ====================================================================== #}
 
 {% with _empty=empty_message|default:"No data to display." _borderless=borderless|default:False %}
-{% with _has_actions=rows.0.actions _show_actions=show_actions|default:False %}
+{% with _show_actions=show_actions|default:False %}
 
 {# ------------------------------------------------------------------ #}
 {# Outer wrapper                                                        #}
@@ -99,9 +107,9 @@
         </th>
         {% endfor %}
 
-        {# Actions column header — shown when rows contain actions #}
+        {# Actions column header — shown only when show_actions=True is explicit #}
         {# By convention the header label is empty; right-alignment signals purpose. #}
-        {% if _show_actions or _has_actions %}
+        {% if _show_actions %}
         <th scope="col"
             class="px-token-4 py-token-3
                    text-token-xs font-token-medium text-sekai-text-muted
@@ -132,7 +140,7 @@
           {% endfor %}
 
           {# Actions cell — right-aligned #}
-          {% if _show_actions or _has_actions %}
+          {% if _show_actions %}
           <td class="px-token-4 py-token-3 text-right whitespace-nowrap">
             {% if row.actions %}
             <div class="inline-flex items-center gap-token-4">
@@ -160,7 +168,7 @@
         {# ---- Empty state ---- #}
         {# colspan adds 1 only when the actions column is actually rendered. #}
         <tr>
-          <td colspan="{% if _show_actions or _has_actions %}{{ headers|length|add:1 }}{% else %}{{ headers|length }}{% endif %}"
+          <td colspan="{% if _show_actions %}{{ headers|length|add:1 }}{% else %}{{ headers|length }}{% endif %}"
               class="px-token-4 py-token-10
                      text-center text-token-sm text-sekai-text-subtle">
             {{ _empty }}
@@ -173,5 +181,4 @@
   </table>
 </div>
 
-{% endwith %}
 {% endwith %}

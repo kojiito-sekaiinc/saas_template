@@ -1,9 +1,13 @@
 # Sekai UI System v1
 ## Design & Implementation Specification
 
-Version: 1.0  
-Design Style: Notion-style Minimal UI  
-Target Stack: Django Templates + Tailwind CSS  
+Version: 1.0
+Design Style: Notion-style Minimal UI
+Target Stack: Django Templates + Tailwind CSS
+
+> **Document scope:** This file is the build specification from which the system was constructed.
+> It describes both implemented features and future plans; each section is labelled accordingly.
+> For current component APIs, refer to the inline documentation at the top of each template file.
 
 ---
 
@@ -83,24 +87,21 @@ Components must be structured so that AI agents such as ClaudeCode can easily re
 
 # 4. Repository Structure
 
-The UI system should follow this repository structure.
+**Status: Implemented** (reflects current state of the repository)
 
 ```
 sekai-ui-system/
 ├ README.md
+├ AI_RULES.md
 │
 ├ design/
 │   ├ tokens.json
 │   └ design-principles.md
 │
-├ prompts/
-│   ├ claude-system-prompt.md
-│   ├ component-generation-prompt.md
-│   └ page-generation-prompt.md
-│
 ├ components/
 │   ├ button.html
 │   ├ input.html
+│   ├ select.html
 │   ├ card.html
 │   ├ table.html
 │   ├ sidebar.html
@@ -116,15 +117,10 @@ sekai-ui-system/
 │   ├ list.html
 │   └ form.html
 │
-├ figma/
-│   └ figma-structure.md
-│
 └ docs/
     ├ sekai-ui-system-spec.md
     ├ COMPONENT_SPEC.md
-    ├ usage.md
-    ├ django-integration.md
-    └ figma-to-code.md
+    └ UI_EXAMPLES.md
 ```
 
 ---
@@ -153,9 +149,13 @@ with the following content:
     "text_subtle": "#9CA3AF",
     "primary": "#2F6FEB",
     "primary_hover": "#1D4ED8",
+    "primary_subtle": "#EEF4FF",
     "success": "#15803D",
     "warning": "#B45309",
-    "danger": "#B91C1C"
+    "danger": "#B91C1C",
+    "danger_subtle": "#FEF2F2",
+    "success_subtle": "#F0FDF4",
+    "warning_subtle": "#FFFBEB"
   },
   "font": {
     "family": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -164,9 +164,12 @@ with the following content:
     "size_md": "16px",
     "size_lg": "20px",
     "size_xl": "24px",
-    "line_height_sm": "1.4",
-    "line_height_md": "1.6",
-    "line_height_lg": "1.3"
+    "line_height_tight": "1.3",
+    "line_height_normal": "1.4",
+    "line_height_relaxed": "1.6",
+    "weight_normal": "400",
+    "weight_medium": "500",
+    "weight_semibold": "600"
   },
   "radius": {
     "sm": "6px",
@@ -185,7 +188,7 @@ with the following content:
   },
   "shadow": {
     "none": "none",
-    "sm": "0 1px 2px rgba(0,0,0,0.04)"
+    "sm": "0 1px 2px rgba(0, 0, 0, 0.04)"
   },
   "layout": {
     "content_max_width": "1200px",
@@ -232,6 +235,13 @@ Rules:
 - content max width from tokens
 - header height from tokens
 
+Responsive behavior:
+
+- Minimum supported viewport: 360px.
+- Below `md:` (768px): sidebar is hidden by default. A hamburger button in the topbar opens an offcanvas drawer that slides in from the left, overlaid on the page with a semi-transparent backdrop. Tapping the backdrop or pressing Esc closes the drawer. The main content area uses no left margin at this size.
+- At `md:` and above: sidebar is permanently visible at 240px (`layout.sidebar_width`). The main content area is offset left by the sidebar width. The hamburger button is hidden.
+- `topbar_center` block is always hidden below `sm:` (640px). The topbar has no horizontal room at narrow widths. Do not place mobile-required functionality in this block — use `topbar_actions` or the top of `page_content` instead.
+
 ---
 
 ## auth.html
@@ -252,7 +262,7 @@ Characteristics:
 
 # 7. Core Components
 
-Create reusable UI components.
+**Status: Implemented**
 
 ---
 
@@ -287,6 +297,17 @@ Characteristics:
 
 ---
 
+## select.html
+
+Characteristics:
+
+- matches input.html visual design and API
+- choices provided as a list of dicts from view context
+- optional error state and help text
+- selected_value for pre-selection
+
+---
+
 ## card.html
 
 Usage:
@@ -310,7 +331,10 @@ Characteristics:
 - soft row borders
 - hover highlight
 - minimal header styling
-- right-aligned actions
+- right-aligned actions column — **requires `show_actions=True`** to appear; hidden by default
+- outer wrapper carries `overflow-x-auto` on all breakpoints — table scrolls horizontally on narrow viewports; row data is not reflowed into cards
+
+Note: the actions column is not shown automatically. Pass `show_actions=True` explicitly when including the component, or the actions column and its header will be omitted regardless of whether rows contain action data.
 
 ---
 
@@ -378,63 +402,24 @@ Structure:
 
 # 9. Claude System Prompt
 
-Create:
+**Status: Future plan — not yet implemented**
 
-```
-prompts/claude-system-prompt.md
-```
+Planned location: `prompts/claude-system-prompt.md`
 
-Content:
-
-```
-You are implementing UI using Sekai UI System.
-
-Rules:
-
-- Always reference design/tokens.json
-- Reuse existing components whenever possible
-- Maintain Notion-style minimal UI
-- Avoid flashy visual design
-- Avoid heavy shadows
-- Maintain consistent spacing
-- Use Tailwind CSS
-- Structure templates for Django reuse
-```
+Intended content: a system prompt instructing AI agents to reference
+design tokens, reuse existing components, and maintain the Notion-style
+minimal design philosophy. Currently, `AI_RULES.md` serves this purpose.
 
 ---
 
 # 10. Figma Structure
 
-Define the Figma file structure in:
+**Status: Future plan — not yet implemented**
 
-```
-figma/figma-structure.md
-```
+Planned location: `figma/figma-structure.md`
 
-Pages:
-
-```
-00 Foundations
-01 Components
-02 Layouts
-03 Screens
-```
-
-Foundations include:
-
-- colors
-- typography
-- spacing
-- radius
-- shadows
-
-Components include:
-
-- buttons
-- inputs
-- cards
-- tables
-- sidebar
+Intended to define a Figma file with pages: Foundations, Components,
+Layouts, and Screens — mirroring the repository structure.
 
 ---
 
@@ -470,6 +455,7 @@ Core components:
 
 - button.html
 - input.html
+- select.html
 - card.html
 - table.html
 - sidebar.html

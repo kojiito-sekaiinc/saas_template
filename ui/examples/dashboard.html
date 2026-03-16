@@ -37,6 +37,9 @@
 {#   ]                                                                     #}
 {#                                                                         #}
 {#   current_user = request.user                                           #}
+{#   logout_url    — URL for the Sign out link; use reverse('logout') or  #}
+{#                   any project-specific logout URL in the view:          #}
+{#                     context['logout_url'] = reverse('logout')          #}
 {#                                                                         #}
 {#   activity_headers = ['User', 'Action', 'Role', 'Time']                 #}
 {#   activity_rows = [                                                      #}
@@ -104,7 +107,7 @@
 {% block sidebar_footer %}
 {# px-token-5 (20px) matches the effective indent of nav items (px-token-3 container + px-token-2 item = 20px). #}
 <div class="px-token-5">
-  <a href="{% url 'logout' %}"
+  <a href="{{ logout_url }}"
      class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
     Sign out
   </a>
@@ -166,6 +169,7 @@
   <div class="flex items-center justify-between px-token-6 py-token-4 border-b border-sekai-border">
     <div>
       <h2 class="text-token-sm font-token-medium text-sekai-text">Recent Activity</h2>
+      {# mt-0.5 (2px) — intentional micro-spacing for tight header subtext #}
       <p class="mt-0.5 text-token-xs text-sekai-text-muted">Latest actions across your workspace</p>
     </div>
     {% include "components/button.html" with
@@ -180,7 +184,8 @@
         headers=activity_headers
         rows=activity_rows
         empty_message="No recent activity."
-        borderless=True %}
+        borderless=True
+        show_actions=True %}
   </div>
 
 </div>

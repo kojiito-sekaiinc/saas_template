@@ -1,0 +1,118 @@
+{# ====================================================================== #}
+{# components/select.html                                                  #}
+{#                                                                         #}
+{# Single-field select component with label, help text, and error state.  #}
+{# Matches the visual design and API of components/input.html.            #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   {# Basic select #}                                                    #}
+{#   {% include "components/select.html" with name="role" label="Role"   #}
+{#       choices=role_choices %}                                           #}
+{#                                                                         #}
+{#   {# With selected value and error #}                                   #}
+{#   {% include "components/select.html" with name="role" label="Role"   #}
+{#       choices=role_choices selected_value=form.role.value              #}
+{#       error=form.role.errors.0 required=True %}                        #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   name           — select name attribute (required)                    #}
+{#   id             — select id (default: same as name)                   #}
+{#   label          — visible label text (optional)                       #}
+{#   choices        — list of dicts from view context (required):         #}
+{#                      value    — option value attribute                  #}
+{#                      label    — visible option text                     #}
+{#                      disabled — boolean; makes option non-selectable   #}
+{#   selected_value — value to pre-select (optional)                      #}
+{#                  Compared as strings so integer 0 and string "0" both  #}
+{#                  match correctly. Safe to pass GET params or model      #}
+{#                  field values directly without type conversion.         #}
+{#   help_text      — descriptive text shown below field (optional)       #}
+{#   error          — error message; triggers error state when present    #}
+{#   required       — boolean; adds required attribute and asterisk       #}
+{#   disabled       — boolean; dims and prevents interaction              #}
+{#   extra_classes  — additional classes on the select element (optional) #}
+{#                                                                         #}
+{# View context example:                                                   #}
+{#   role_choices = [                                                      #}
+{#       {'value': '',       'label': 'All roles'},                       #}
+{#       {'value': 'admin',  'label': 'Admin'},                           #}
+{#       {'value': 'member', 'label': 'Member'},                          #}
+{#       {'value': 'viewer', 'label': 'Viewer'},                          #}
+{#   ]                                                                     #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.surface           — select background                          #}
+{#   color.border            — default border                             #}
+{#   color.primary           — focus ring                                 #}
+{#   color.danger            — error border and error text                #}
+{#   color.text              — selected value text                        #}
+{#   color.text_muted        — help text                                  #}
+{#   color.bg_subtle         — disabled background                        #}
+{#   font.size_sm            — select and label text                      #}
+{#   font.size_xs            — help / error text                          #}
+{#   font.weight_medium      — label weight                               #}
+{#   spacing.2 (gap), spacing.3 (px)                                      #}
+{#   radius.sm               — select corners                             #}
+{# ====================================================================== #}
+
+{% with _id=id|default:name %}
+
+<div class="flex flex-col gap-token-2">
+
+  {# ---- Label ---- #}
+  {% if label %}
+  <label for="{{ _id }}"
+         class="text-token-sm font-token-medium text-sekai-text leading-normal">
+    {{ label }}
+    {% if required %}
+    <span class="text-sekai-danger ml-0.5" aria-hidden="true">*</span>
+    {% endif %}
+  </label>
+  {% endif %}
+
+  {# ---- Select field ---- #}
+  <select
+    name="{{ name }}"
+    id="{{ _id }}"
+    {% if required %}required aria-required="true"{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if error %}aria-invalid="true" aria-describedby="{{ _id }}-message"{% elif help_text %}aria-describedby="{{ _id }}-message"{% endif %}
+    class="w-full px-token-3 py-token-2 text-token-sm text-sekai-text
+           bg-sekai-surface
+           border rounded-token-sm
+           leading-normal
+           transition-colors duration-150
+           focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-sekai-bg-subtle
+           {% if error %}
+             border-sekai-danger focus:border-sekai-danger focus:ring-sekai-danger-subtle
+           {% else %}
+             border-sekai-border focus:border-sekai-primary focus:ring-sekai-primary-subtle
+           {% endif %}
+           {{ extra_classes }}"
+  >
+    {% for choice in choices %}
+    <option value="{{ choice.value }}"
+            {% if choice.disabled %}disabled{% endif %}
+            {% if choice.value|stringformat:"s" == selected_value|stringformat:"s" %}selected{% endif %}>
+      {{ choice.label }}
+    </option>
+    {% endfor %}
+  </select>
+
+  {# ---- Error message ---- #}
+  {% if error %}
+  <p id="{{ _id }}-message" class="text-token-xs text-sekai-danger leading-normal" role="alert">
+    {{ error }}
+  </p>
+
+  {# ---- Help text (shown only when no error) ---- #}
+  {% elif help_text %}
+  <p id="{{ _id }}-message" class="text-token-xs text-sekai-text-muted leading-normal">
+    {{ help_text }}
+  </p>
+  {% endif %}
+
+</div>
+
+{% endwith %}

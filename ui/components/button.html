@@ -48,9 +48,14 @@
 {% if href %}
 
 {# ---- Anchor variant ---- #}
-<a href="{{ href }}"
+{# disabled=True: href is omitted so navigation is physically prevented,  #}
+{# aria-disabled="true" notifies assistive technologies, and opacity/     #}
+{# cursor classes signal the disabled state visually.                     #}
+<a {% if not disabled %}href="{{ href }}"{% endif %}
+   {% if disabled %}aria-disabled="true"{% endif %}
    class="{{ base }}
-     {% if v == 'primary' %}bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary
+     {% if disabled %}opacity-50 cursor-not-allowed
+     {% elif v == 'primary' %}bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary
      {% elif v == 'secondary' %}bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover focus:ring-sekai-border-strong
      {% elif v == 'ghost' %}bg-transparent text-sekai-text-muted border-transparent hover:bg-sekai-surface-hover hover:text-sekai-text focus:ring-sekai-border
      {% elif v == 'danger' %}bg-sekai-surface text-sekai-danger border-sekai-border hover:bg-sekai-danger-subtle hover:border-sekai-danger focus:ring-sekai-danger-subtle
@@ -65,7 +70,7 @@
 {# ---- Button variant ---- #}
 <button type="{{ t }}"
         {% if name %}name="{{ name }}"{% endif %}
-        {% if value %}value="{{ value }}"{% endif %}
+        {% if value is not None %}value="{{ value }}"{% endif %}
         {% if disabled %}disabled{% endif %}
         class="{{ base }} disabled:opacity-50 disabled:cursor-not-allowed
           {% if v == 'primary' %}bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary

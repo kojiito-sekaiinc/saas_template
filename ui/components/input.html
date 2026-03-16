@@ -23,7 +23,10 @@
 {#                  default: "text"                                         #}
 {#   label        — visible label text (optional)                          #}
 {#   placeholder  — placeholder text (optional)                            #}
-{#   value        — current field value (optional)                         #}
+{#   value        — current field value (optional)                        #}
+{#                  Rendered when value is not None. 0 and "" are safe    #}
+{#                  to pass and will be preserved. Omitting value or      #}
+{#                  passing None both result in no value attribute.       #}
 {#   help_text    — descriptive text shown below field (optional)          #}
 {#   error        — error message; triggers error state when present       #}
 {#   required     — boolean; adds required attribute and asterisk          #}
@@ -68,7 +71,7 @@
     name="{{ name }}"
     id="{{ _id }}"
     {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
-    {% if value %}value="{{ value }}"{% endif %}
+    {% if value is not None %}value="{{ value }}"{% endif %}
     {% if required %}required aria-required="true"{% endif %}
     {% if disabled %}disabled{% endif %}
     {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
@@ -79,7 +82,7 @@
            leading-normal
            placeholder:text-sekai-text-subtle
            transition-colors duration-150
-           focus:outline-none focus:ring-2 focus:ring-offset-0
+           focus:outline-none focus:ring-2 focus:ring-offset-1
            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-sekai-bg-subtle
            {% if error %}
              border-sekai-danger focus:border-sekai-danger focus:ring-sekai-danger-subtle

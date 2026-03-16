@@ -32,11 +32,21 @@
 {#                                                                         #}
 {#   nav_items     — sidebar navigation list (see dashboard.html)          #}
 {#   current_user  — request.user                                          #}
+{#   logout_url    — URL for the Sign out link; use reverse('logout') or  #}
+{#                   any project-specific logout URL in the view:          #}
+{#                     context['logout_url'] = reverse('logout')          #}
 {#   form          — Django ModelForm or Form instance (optional;          #}
 {#                   if provided, field errors are shown automatically)    #}
 {#   instance      — model instance for edit mode (optional;               #}
 {#                   presence switches title to "Edit User")               #}
 {#   cancel_url    — URL for the Cancel button  default: "/users/"         #}
+{#                                                                         #}
+{#   role_choices = [                                                      #}
+{#       {'value': '',       'label': 'Select a role…', 'disabled': True},#}
+{#       {'value': 'admin',  'label': 'Admin'},                           #}
+{#       {'value': 'member', 'label': 'Member'},                          #}
+{#       {'value': 'viewer', 'label': 'Viewer'},                          #}
+{#   ]                                                                     #}
 {# ====================================================================== #}
 
 {% block title %}{% if instance %}Edit User{% else %}Add User{% endif %} — MyApp{% endblock %}
@@ -75,7 +85,7 @@
 
 {% block sidebar_footer %}
 <div class="px-token-5">
-  <a href="{% url 'logout' %}"
+  <a href="{{ logout_url }}"
      class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
     Sign out
   </a>
@@ -110,6 +120,7 @@
     {# Section header #}
     <div class="px-token-6 py-token-4 border-b border-sekai-border">
       <h2 class="text-token-sm font-token-medium text-sekai-text">Basic Information</h2>
+      {# mt-0.5 (2px) — intentional micro-spacing for tight header subtext #}
       <p class="mt-0.5 text-token-xs text-sekai-text-muted">
         The user's name and primary contact details.
       </p>
@@ -159,6 +170,7 @@
     {# Section header #}
     <div class="px-token-6 py-token-4 border-b border-sekai-border">
       <h2 class="text-token-sm font-token-medium text-sekai-text">Account Settings</h2>
+      {# mt-0.5 (2px) — intentional micro-spacing for tight header subtext #}
       <p class="mt-0.5 text-token-xs text-sekai-text-muted">
         Role and access level within the workspace.
       </p>
@@ -167,32 +179,12 @@
     {# Fields #}
     <div class="p-token-6 flex flex-col gap-token-5">
 
-      {# Role — select field, styled to match input.html #}
-      <div class="flex flex-col gap-token-2">
-        <label for="role" class="text-token-sm font-token-medium text-sekai-text leading-normal">
-          Role <span class="text-sekai-danger ml-0.5" aria-hidden="true">*</span>
-        </label>
-        <select id="role" name="role" required
-                class="w-full px-token-3 py-token-2
-                       text-token-sm text-sekai-text
-                       bg-sekai-surface border border-sekai-border rounded-token-sm
-                       leading-normal
-                       focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-sekai-primary focus:ring-sekai-primary-subtle
-                       transition-colors duration-150
-                       {% if form.role.errors %}border-sekai-danger focus:border-sekai-danger focus:ring-sekai-danger-subtle{% endif %}">
-          <option value="" disabled {% if not instance %}selected{% endif %}>Select a role…</option>
-          <option value="admin"  {% if instance.role == 'admin'  or form.role.value == 'admin'  %}selected{% endif %}>Admin</option>
-          <option value="member" {% if instance.role == 'member' or form.role.value == 'member' %}selected{% endif %}>Member</option>
-          <option value="viewer" {% if instance.role == 'viewer' or form.role.value == 'viewer' %}selected{% endif %}>Viewer</option>
-        </select>
-        {% if form.role.errors %}
-        <p class="text-token-xs text-sekai-danger leading-normal" role="alert">{{ form.role.errors.0 }}</p>
-        {% else %}
-        <p class="text-token-xs text-sekai-text-muted leading-normal">
-          Admins can manage all workspace settings. Members can create and edit content. Viewers have read-only access.
-        </p>
-        {% endif %}
-      </div>
+      {# Role — uses select component; role_choices provided by view context #}
+      {% with _selected=instance.role|default:form.role.value %}
+      {% include "components/select.html" with name="role" label="Role" required=True
+          choices=role_choices selected_value=_selected error=form.role.errors.0
+          help_text="Admins can manage all workspace settings. Members can create and edit content. Viewers have read-only access." %}
+      {% endwith %}
 
       {# Department — optional free-text field #}
       {% include "components/input.html" with
@@ -214,6 +206,7 @@
 
     <div class="px-token-6 py-token-4 border-b border-sekai-border">
       <h2 class="text-token-sm font-token-medium text-sekai-text">Security</h2>
+      {# mt-0.5 (2px) — intentional micro-spacing for tight header subtext #}
       <p class="mt-0.5 text-token-xs text-sekai-text-muted">
         Set an initial password for this account.
       </p>

@@ -48,19 +48,19 @@ Used for managing records.
 
 Typical examples:
 
-Users  
-Projects  
-Transactions  
-Files  
+Users
+Projects
+Transactions
+Files
 
 Structure:
 
-Page Header  
-Primary Action Button  
+Page Header
+Primary Action Button
 
-Filter Bar  
+Filter Bar
 
-Data Table  
+Data Table
 
 Pagination
 
@@ -70,6 +70,7 @@ Guidelines:
 - Table should remain visually light
 - Avoid heavy grid lines
 - Use subtle hover effects for rows
+- Filter bar fields wrap to full-width on small screens (`flex-wrap`); fixed widths apply at `sm:` and above
 
 ---
 
@@ -199,9 +200,9 @@ Guidelines:
 
 Table structure:
 
-Table Header  
-Table Body  
-Optional Actions Column  
+Table Header
+Table Body
+Optional Actions Column
 
 Guidelines:
 
@@ -209,6 +210,8 @@ Guidelines:
 - Rows should have hover feedback
 - Avoid vertical grid lines when possible
 - Actions column should be right-aligned
+- **Actions column requires `show_actions=True`** — it is hidden by default regardless of row data; omitting the flag always suppresses the column
+- On narrow viewports the table scrolls horizontally (`overflow-x-auto`); rows are never reflowed into cards
 
 ---
 
@@ -218,9 +221,9 @@ Navigation should remain simple.
 
 Sidebar structure:
 
-Application Logo  
+Application Logo
 
-Navigation Items  
+Navigation Items
 
 Optional Secondary Section
 
@@ -229,6 +232,7 @@ Guidelines:
 - Highlight active item
 - Avoid deeply nested navigation
 - Keep labels short and clear
+- On mobile (below `md:` / 768px) the sidebar becomes an offcanvas drawer opened by a hamburger button in the topbar; at `md:` and above it is a fixed sidebar
 
 ---
 
@@ -238,16 +242,17 @@ Most pages begin with a header section.
 
 Structure:
 
-Page Title  
-Optional Description  
+Page Title
+Optional Description
 
-Primary Action Button  
+Primary Action Button
 
 Guidelines:
 
 - Title should clearly describe the page
 - Description should remain short
 - Avoid placing too many actions in the header
+- On small screens the title block and action button stack vertically (`flex-wrap`); on wider screens they sit side by side
 
 ---
 
