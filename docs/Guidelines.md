@@ -144,7 +144,7 @@ Avoid speculative or “nice-to-have” dependencies.
 
 ### Claude Code
 - Used for **implementation**
-- Must follow `claude.md` and skill definitions
+- Must follow `CLAUDE.md` and skill definitions
 - Must not introduce features beyond instructions
 - Must not refactor locked areas casually
 

@@ -50,7 +50,7 @@ Keep implementation aligned with the spec and prevent silent drift.
 
 ### Standard Cycle
 1. Spec
-   - Confirm the task is consistent with claude.md and skills
+   - Confirm the task is consistent with CLAUDE.md and skills
    - Confirm the change is in the correct scope (usually apps/app only)
 
 2. Code
@@ -67,7 +67,7 @@ Keep implementation aligned with the spec and prevent silent drift.
 
 ### Done (Definition)
 A change is “done” only when:
-- It follows claude.md + skills + guidelines
+- It follows CLAUDE.md + skills + guidelines
 - It passes the local quality gates
 - Review confirms no billing/paywall/template integrity violations
 
@@ -104,7 +104,7 @@ You MAY skip the Explore/Plan phases only for:
 - Read relevant files only
 - Ask Claude to explain:
   - Current behavior
-  - Existing constraints (claude.md, skills, locked areas)
+  - Existing constraints (CLAUDE.md, skills, locked areas)
   - Related flows (auth, billing, middleware, etc.)
 - ❌ No file edits
 - ❌ No command execution
