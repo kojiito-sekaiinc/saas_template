@@ -67,6 +67,8 @@ python manage.py runserver
 | `SECRET_KEY` | Django secret key | Yes (production) |
 | `DEBUG` | Debug mode (True/False) | No (default: False) |
 | `ALLOWED_HOSTS` | Comma-separated list of allowed hosts | No |
+| `SITE_URL` | Base URL of the site. Used to build Stripe Checkout and Portal redirect URLs. If unset in production, Stripe redirects will point to localhost | Yes (production) |
+| `CSRF_TRUSTED_ORIGINS` | Comma-separated trusted origins for CSRF. Auto-populated from `SITE_URL` if HTTPS | No (auto-populated) |
 | `DATABASE_URL` | PostgreSQL connection URL | No (uses SQLite if empty) |
 | `STRIPE_SECRET_KEY` | Stripe secret API key | Yes (for billing) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes (for billing) |
