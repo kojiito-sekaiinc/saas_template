@@ -80,13 +80,11 @@
               flex items-center justify-center
               text-token-xs font-token-medium text-sekai-text-muted"
        aria-hidden="true">
-    {# first_name / last_name 未設定時は username の頭文字を fallback に使う #}
-    {% with fn=request.user.first_name|first|upper ln=request.user.last_name|first|upper %}
-      {% if fn or ln %}{{ fn }}{{ ln }}{% else %}{{ request.user.username|first|upper }}{% endif %}
-    {% endwith %}
+    {# カスタム User は email のみを持つため、メールアドレスの頭文字を使う #}
+    {{ request.user.email|first|upper }}
   </div>
   <span class="text-token-sm text-sekai-text hidden sm:block">
-    {{ request.user.get_full_name|default:request.user.username }}
+    {{ request.user.email }}
   </span>
 </div>
 {% endblock %}
