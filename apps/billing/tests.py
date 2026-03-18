@@ -452,6 +452,64 @@ def test_checkout_uses_db_customer_id_on_concurrent_race(user, monkeypatch, clie
     assert bp.stripe_customer_id == "cus_concurrent_123"
 
 
+# ====================================================
+# 14. portal() return_url: active → /app/ へリダイレクト
+# ====================================================
+
+@pytest.mark.django_db
+def test_portal_return_url_is_app_when_active(user, monkeypatch, client):
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "SITE_URL", "http://localhost:8000")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_portal_active",
+        stripe_subscription_id="sub_portal_active",
+        status="active",
+    )
+
+    mock_session = MagicMock()
+    mock_session.url = "https://billing.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.billing_portal.Session.create", return_value=mock_session) as mock_create:
+        client.get("/billing/portal/")
+
+    call_kwargs = mock_create.call_args[1]
+    assert call_kwargs["return_url"] == "http://localhost:8000/app/"
+
+
+# ====================================================
+# 15. portal() return_url: non-active → /billing/pricing/ へリダイレクト
+# ====================================================
+
+@pytest.mark.django_db
+def test_portal_return_url_is_pricing_when_not_active(user, monkeypatch, client):
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "SITE_URL", "http://localhost:8000")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_portal_pastdue",
+        stripe_subscription_id="sub_portal_pastdue",
+        status="past_due",
+    )
+
+    mock_session = MagicMock()
+    mock_session.url = "https://billing.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.billing_portal.Session.create", return_value=mock_session) as mock_create:
+        client.get("/billing/portal/")
+
+    call_kwargs = mock_create.call_args[1]
+    assert call_kwargs["return_url"] == "http://localhost:8000/billing/pricing/"
+
+
 # 動作確認用・お守り的なテスト（残しておいてOK）
 @pytest.mark.django_db
 def test_pytest_django_is_working():

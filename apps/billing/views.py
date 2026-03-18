@@ -147,7 +147,11 @@ def portal(request):
         return redirect("billing:pricing")
 
     site_url = settings.SITE_URL.rstrip("/")
-    return_url = f"{site_url}/billing/pricing/"
+    # Portal から戻る先: アクティブ会員はアプリへ、それ以外は pricing へ
+    if billing_profile.status == "active":
+        return_url = f"{site_url}/app/"
+    else:
+        return_url = f"{site_url}/billing/pricing/"
 
     try:
         session = stripe.billing_portal.Session.create(
