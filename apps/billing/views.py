@@ -16,6 +16,15 @@ from .models import BillingProfile, ProcessedEvent
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+# checkout() で Portal に誘導するサブスクリプション状態。
+# これらの状態は「購読は存在するが支払いが詰まっている」ケースであり、
+# Checkout で新規 subscription を作ると Stripe 側に並存状態が生じる可能性がある。
+# stripe_subscription_id がある場合のみ Portal へ送る（痕跡がない場合は Checkout へ）。
+#
+# incomplete_expired は初回支払いが失効済みで subscription が存在しない扱いのため
+# canceled と同様に Checkout へ進む（このセットに含めない）。
+_PORTAL_STATUSES = {"active", "past_due", "unpaid", "incomplete"}
+
 
 def pricing(request):
     context = {
@@ -41,7 +50,10 @@ def checkout(request):
         billing_profile, _ = BillingProfile.objects.select_for_update().get_or_create(
             user=request.user
         )
-        if billing_profile.status == "active":
+        if (
+            billing_profile.status in _PORTAL_STATUSES
+            and billing_profile.stripe_subscription_id
+        ):
             return redirect("billing:portal")
         existing_customer_id = billing_profile.stripe_customer_id
 

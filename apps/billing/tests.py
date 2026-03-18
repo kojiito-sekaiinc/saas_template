@@ -307,7 +307,67 @@ def test_checkout_uses_idempotency_key(user, monkeypatch, client):
 
 
 # ====================================================
-# 9. stripe_customer_id 未設定時に Customer.create() が呼ばれ
+# 9. past_due + stripe_subscription_id あり → Portal へリダイレクト
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_redirects_to_portal_when_past_due_with_subscription(
+    user, monkeypatch, client
+):
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_pastdue_123",
+        stripe_subscription_id="sub_pastdue_123",
+        status="past_due",
+    )
+
+    client.force_login(user)
+    response = client.post("/billing/checkout/")
+    assert response.status_code == 302
+    assert "/billing/portal/" in response.url
+
+
+# ====================================================
+# 10. canceled + stripe_subscription_id あり → Checkout 継続（Portal に送らない）
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_proceeds_when_canceled_with_existing_subscription(
+    user, monkeypatch, client
+):
+    """
+    canceled は subscription 終了済みなので再購読を Checkout で受け付ける。
+    stripe_subscription_id が残っていても Portal には送らない。
+    """
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "SITE_URL", "http://localhost:8000")
+
+    BillingProfile.objects.create(
+        user=user,
+        stripe_customer_id="cus_canceled_123",
+        stripe_subscription_id="sub_canceled_123",
+        status="canceled",
+    )
+
+    mock_session = MagicMock()
+    mock_session.url = "https://checkout.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.checkout.Session.create", return_value=mock_session):
+        response = client.post("/billing/checkout/")
+
+    assert response.status_code == 302
+    assert "checkout.stripe.com" in response.url
+
+
+# ====================================================
+# 12. stripe_customer_id 未設定時に Customer.create() が呼ばれ
 #    user スコープの idempotency_key が渡される
 # ====================================================
 
@@ -344,7 +404,7 @@ def test_checkout_creates_customer_with_idempotency_key_when_no_customer_exists(
 
 
 # ====================================================
-# 10. フェーズ3で別リクエストが先に stripe_customer_id を保存していた場合、
+# 13. フェーズ3で別リクエストが先に stripe_customer_id を保存していた場合、
 #     DB 上の既存値を正本として checkout session を作成する
 # ====================================================
 
