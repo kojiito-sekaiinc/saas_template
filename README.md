@@ -46,7 +46,15 @@ cp .env.example .env
 python manage.py migrate
 ```
 
-5. Start the development server:
+5. Collect static files:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+This is required before running tests or the dev server. WhiteNoise serves static files in all environments and expects `staticfiles/` to exist.
+
+6. Start the development server:
 
 ```bash
 python manage.py runserver
