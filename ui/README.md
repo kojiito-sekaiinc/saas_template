@@ -158,7 +158,9 @@ TEMPLATES = [
 ]
 ```
 
-3. Install Tailwind CSS via the CDN or the `django-tailwind` package. Reference the CDN in `layouts/base.html`.
+3. **開発時**: `layouts/base.html` の Tailwind Play CDN (`cdn.tailwindcss.com`) をそのまま使用できます。
+   **本番前**: `tailwindcss` CLI で CSS をビルドし、CDN を `<link rel="stylesheet">` に置き換えてください。
+   CDN のまま本番稼働させると、CSP 制限・外部通信制限がある環境でスタイルが消失します。
 
 ### Extending Layouts
 
@@ -226,6 +228,19 @@ The table component requires `show_actions=True` to display the actions column. 
 All visual values are defined in `design/tokens.json`. When writing custom Tailwind classes, align values with the token scale. Do not introduce arbitrary color or spacing values outside the defined tokens.
 
 For component API details, refer to the inline documentation at the top of each template file.
+
+---
+
+## このプロジェクトでの現状（混在構成）
+
+このリポジトリでは Sekai UI への移行が進行中であり、現在 2 系統が混在しています：
+
+- **旧系統**（accounts・billing・home・dashboard）: `templates/base.html` を使用。WhiteNoise が配信するローカル CSS に依存。
+- **Sekai UI 系**（customers 以降）: `ui/layouts/base.html` を使用。Google Fonts CDN と Tailwind CDN に依存（開発用）。
+
+新規ページは Sekai UI 系で実装してください。旧系統は将来の移行対象です。
+
+本番デプロイ前に必ず Tailwind CDN を静的ファイルに置き換えてください（詳細は `../README.md` の Known Limitations を参照）。
 
 ---
 

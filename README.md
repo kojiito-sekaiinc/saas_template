@@ -7,7 +7,7 @@ Designed for fast iteration, safe monetization, and service-by-service SaaS laun
 ## Technology Stack
 
 - **Backend**: Django
-- **Frontend**: Django Templates + HTMX + Tailwind CSS (static)
+- **Frontend**: Django Templates + Tailwind CSS
 - **Database**: PostgreSQL (SQLite for local development)
 - **Payments**: Stripe (subscription model)
 - **Deployment**: Railway
@@ -86,6 +86,35 @@ python manage.py runserver
 - Subscription: 980 JPY/month with 7-day free trial (managed by application, not Stripe).
 
 ## Known Limitations
+
+### Tailwind CSS (Sekai UI 系) — 本番デプロイ前に必須対応
+
+`ui/layouts/base.html` は開発利便性のため Tailwind Play CDN を使用しています。
+本番環境ではこの CDN を **必ず静的ファイルに置き換えてください**。
+
+対応手順：
+
+1. `tailwindcss` CLI で CSS をビルドし `static/css/sekai.css` として配置する
+2. `ui/layouts/base.html` の `<script src="https://cdn.tailwindcss.com">` を
+   `<link rel="stylesheet" href="{% static 'css/sekai.css' %}">` に置き換える
+
+CDN のまま本番稼働させると、CSP 設定・外部通信制限・オフライン環境において
+Sekai UI を使用するすべてのページのスタイルが消失します。
+
+Google Fonts（Inter）も同様に外部 CDN を経由しているため、制限環境では
+フォントファイルをセルフホストする対応も併せて実施してください。
+
+### フロントエンド構成（混在期）
+
+現在、以下の 2 系統が混在しています：
+
+- **旧系統**（accounts・billing・home・dashboard）:
+  `templates/base.html` → `static/css/app.css`（WhiteNoise 配信）
+- **Sekai UI 系**（customers 以降）:
+  `ui/layouts/base.html` → Google Fonts CDN + Tailwind CDN（開発用）
+
+新規ページは Sekai UI 系で実装してください。旧系統は将来の移行対象です。
+本番前に上記の CDN 対応を Sekai UI 系に対して実施する必要があります。
 
 ### Rate Limiting Cache (LocMemCache)
 
