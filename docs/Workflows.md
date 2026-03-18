@@ -44,7 +44,7 @@ Build features in small, reversible increments with clear intent.
 Keep implementation aligned with the spec and prevent silent drift.
 
 ### Roles
-- Spec owner: claude.md + skills + docs/Guidelines.md
+- Spec owner: CLAUDE.md + .claude/skills/*/SKILL.md + docs/Guidelines.md
 - Implementer: Claude Code
 - Reviewer: Codex (and/or human)
 

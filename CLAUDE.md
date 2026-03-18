@@ -51,7 +51,7 @@ Violation of any skill is considered a violation of this specification.
 The technology stack is **fixed**:
 
 - Backend: Django
-- Frontend: Django Templates + HTMX + Tailwind CSS (static)
+- Frontend: Django Templates + Tailwind CSS
 - Authentication: Email + Password (Django standard auth)
 - Database: PostgreSQL (Railway, Django ORM)
 - Payments: Stripe (subscription model)

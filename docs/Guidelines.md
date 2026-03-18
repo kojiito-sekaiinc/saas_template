@@ -10,8 +10,8 @@ These guidelines exist to:
 - Enable long-term reuse of this repository
 
 This document complements (but does not override):
-- `claude.md` (highest priority rules)
-- Skill definitions under `skills/*/Skill.md`
+- `CLAUDE.md` (highest priority rules)
+- Skill definitions under `.claude/skills/*/SKILL.md`
 
 ---
 
@@ -31,7 +31,7 @@ All other directories are considered **core template infrastructure**.
 ### 🟢 High-Change Area (Expected to change per service)
 - `apps/app/`
 - UI copy / text
-- Templates under `apps/app/templates/`
+- Templates under `templates/app/`
 
 ### 🟡 Low-Change Area (Change only with justification)
 - `apps/accounts/`
