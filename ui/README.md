@@ -145,20 +145,23 @@ Sekai UI System is built for Django Templates and Tailwind CSS.
 
 ### Setup
 
-1. Copy the `layouts/` and `components/` directories into your Django project's templates directory.
-2. Register the template directories in `settings.py`:
+1. `ui/` ディレクトリをプロジェクトルートに配置し、`settings.py` の `TEMPLATES["DIRS"]` に追加します。
+   ファイルのコピーは不要です。`ui/` を独立したディレクトリとして直接参照してください。
 
 ```python
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "templates", BASE_DIR / "ui"],
         ...
     }
 ]
 ```
 
-3. **開発時**: `layouts/base.html` の Tailwind Play CDN (`cdn.tailwindcss.com`) をそのまま使用できます。
+この設定により `{% extends "layouts/app_shell.html" %}` や `{% include "components/button.html" %}` が
+`ui/` 以下のファイルを参照します。
+
+2. **開発時**: `layouts/base.html` の Tailwind Play CDN (`cdn.tailwindcss.com`) をそのまま使用できます。
    **本番前**: `tailwindcss` CLI で CSS をビルドし、CDN を `<link rel="stylesheet">` に置き換えてください。
    CDN のまま本番稼働させると、CSP 制限・外部通信制限がある環境でスタイルが消失します。
 
@@ -202,6 +205,11 @@ Extend `auth.html` for login and registration pages:
 ```
 
 Available blocks in `auth.html`: `title`, `brand`, `auth_content`, `auth_footer`, `scripts`.
+
+> **このプロジェクトの現状**: `templates/accounts/login.html` および `signup.html` は現時点で
+> 旧 `base.html` を継承しており、`layouts/auth.html` への移行は未実施です。
+> auth ページを Sekai UI に統一する場合は、これらのテンプレートを `layouts/auth.html` ベースに
+> 書き直してください。
 
 ### Using Components
 
