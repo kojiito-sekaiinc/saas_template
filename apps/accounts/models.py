@@ -51,7 +51,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     def get_or_create_profile(self):
-        """Get or lazily create the user's profile."""
+        """
+        Profile を取得または作成する。
+
+        通常フローでは post_save シグナル（see apps.accounts.signals）が
+        User 作成時に自動で Profile を生成するため、このメソッドは呼ばれない。
+        データ移行・管理コマンド・テストなど、シグナルを経由しない
+        ユーザー作成が行われた場合の補助手段として存在する。
+        """
         profile, _ = Profile.objects.get_or_create(
             user=self,
             defaults={"free_until": timezone.now() + timedelta(days=FREE_TRIAL_DAYS)},
