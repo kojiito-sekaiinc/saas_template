@@ -126,6 +126,14 @@ Google Fonts（Inter）も同様に外部 CDN を経由しているため、制�
 新規ページは Sekai UI 系で実装してください。旧系統は将来の移行対象です。
 本番前に上記の CDN 対応を Sekai UI 系に対して実施する必要があります。
 
+### ログイン防御の範囲（credential stuffing）
+
+ログイン保護は `django-axes` によるアカウント（email）単位のロックアウトが有効です（5 回失敗で 1 時間ロック）。特定アカウントへの総当たり攻撃は防ぎます。
+
+一方、IP を変えながら多数のアカウントを試す **credential stuffing** はカバー範囲外です。`django-axes` は IP 軸とアカウント軸で個別に閾値を設定できないため、IP ベースの制限を追加すると共有 IP 環境での正当ユーザー誤ロックアウトが発生しやすくなります。この制限は設計上の意図的なトレードオフです。
+
+credential stuffing への対策が必要な場合は、CDN/WAF（Cloudflare 等）やリバースプロキシ側でのレートリミットで補完してください。詳細は `docs/RUNBOOK.md` の「セキュリティ関連の補足」を参照してください。
+
 ### Rate Limiting Cache (LocMemCache)
 
 The signup rate limiter uses Django's `LocMemCache`, which is **process-local**.

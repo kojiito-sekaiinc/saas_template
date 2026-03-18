@@ -173,7 +173,35 @@
 - `.env`（Stripe関連）
 
 ## 7. セキュリティ関連の補足
-- DEBUG=False にすると HTTPS 強制 & HSTS 有効になる
+
+### HTTPS / HSTS
+- `DEBUG=False` にすると HTTPS 強制 & HSTS 有効になる
 - Railway 本番は必ず https で公開する前提であること
+
+### ログイン防御の設計方針と範囲
+
+**有効な防御**
+
+`django-axes` をアカウント（email アドレス）単位のロックアウトに設定している（`config/settings.py`）。
+
+- 5 回失敗 → 1 時間ロック（`AXES_FAILURE_LIMIT=5`, `AXES_COOLOFF_TIME=1`）
+- ログイン成功時に失敗カウントをリセット（`AXES_RESET_ON_SUCCESS=True`）
+- 対象：特定アカウントへの総当たり・パスワードスプレー攻撃
+
+**カバーしない脅威**
+
+IP を変えながら多数のアカウントを試す **credential stuffing** には対応していない。
+
+IP ベースの制限追加を検討・仕様確認した結果、`django-axes` は軸（username / ip_address）ごとに個別の閾値を設定できない（グローバルな `AXES_FAILURE_LIMIT` が全軸に適用される）。IP 軸を追加すると、企業ネットワーク・共有 IP・モバイル回線の正当ユーザーが誤ってロックアウトされるリスクが高いため、採用しなかった。これは設定ミスではなく、意図的なトレードオフの結果である。
+
+**将来的な対処の方向**
+
+credential stuffing への対策が必要になった場合は、アプリ側コードの変更よりも次の外側のレイヤーでの対処を推奨する：
+
+- CDN / WAF（Cloudflare 等）での IP レートリミット
+- リバースプロキシでのリクエスト制限
+- ログイン失敗ログの監視とアラート
+
+---
 
 変更する場合は、同時にこのRUNBOOKも更新すること。
