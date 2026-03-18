@@ -74,6 +74,7 @@ python manage.py runserver
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes (for billing) |
 | `STRIPE_PRICE_ID` | Stripe Price ID for subscription | Yes (for billing) |
 | `TRUSTED_PROXY_COUNT` | Number of trusted reverse proxies (set `1` on Railway) | No (default: `0`) |
+| `DJANGO_STATICFILES_MANIFEST` | Enable WhiteNoise `CompressedManifestStaticFilesStorage` for hashed static file URLs. Set `1` in production to enable cache-busting. Requires `collectstatic` to be run first. | No (default: `0`) |
 
 ## Project Structure
 
