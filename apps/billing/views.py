@@ -32,34 +32,59 @@ def checkout(request):
     if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PRICE_ID:
         return HttpResponse("Stripe is not configured", status=500)
 
+    site_url = settings.SITE_URL.rstrip("/")
+    success_url = f"{site_url}/billing/success/"
+    cancel_url = f"{site_url}/billing/cancel/"
+
+    # --- フェーズ1: 現在の状態を読み取る（短いトランザクション）---
     with transaction.atomic():
         billing_profile, _ = BillingProfile.objects.select_for_update().get_or_create(
             user=request.user
         )
-
-        # 既に active なサブスクリプションがある場合は portal へリダイレクト
         if billing_profile.status == "active":
             return redirect("billing:portal")
+        existing_customer_id = billing_profile.stripe_customer_id
 
-        site_url = settings.SITE_URL.rstrip("/")
-        success_url = f"{site_url}/billing/success/"
-        cancel_url = f"{site_url}/billing/cancel/"
-
+    # --- フェーズ2: Stripe 顧客を作成（トランザクション外）---
+    # idempotency_key により、短時間の並行リクエストでも Stripe 側の重複作成を抑制する。
+    # ただし Stripe の冪等性保証は短時間に限られるため、フェーズ3 の DB ロックを正本とする。
+    customer_id = existing_customer_id
+    if not customer_id:
         try:
-            if billing_profile.stripe_customer_id:
-                customer_id = billing_profile.stripe_customer_id
-            else:
-                customer = stripe.Customer.create(
-                    email=request.user.email,
-                    metadata={"user_id": str(request.user.id)},
-                )
-                billing_profile.stripe_customer_id = customer.id
-                billing_profile.save()
-                customer_id = customer.id
+            customer = stripe.Customer.create(
+                email=request.user.email,
+                metadata={"user_id": str(request.user.id)},
+                idempotency_key=f"create_customer_{request.user.id}",
+            )
+            new_customer_id = customer.id
         except stripe.StripeError as e:
-            logger.error(f"Stripe Checkout error: {e}")
+            logger.error(f"Stripe Customer create error: {e}")
             return HttpResponse("An error occurred. Please try again later.", status=500)
 
+        # --- フェーズ3: 再ロックして保存（並行リクエストの race 防止）---
+        # 別リクエストが先に stripe_customer_id を書き込んでいた場合は DB 上の値を正本として採用する。
+        try:
+            with transaction.atomic():
+                billing_profile = BillingProfile.objects.select_for_update().get(
+                    user=request.user
+                )
+                if billing_profile.stripe_customer_id:
+                    logger.info(
+                        "checkout: stripe_customer_id already set by concurrent request "
+                        f"for user_id={request.user.id}; using existing value"
+                    )
+                    customer_id = billing_profile.stripe_customer_id
+                else:
+                    billing_profile.stripe_customer_id = new_customer_id
+                    billing_profile.save()
+                    customer_id = new_customer_id
+        except BillingProfile.DoesNotExist:
+            logger.error(
+                f"checkout: BillingProfile disappeared for user_id={request.user.id}"
+            )
+            return HttpResponse("An error occurred. Please try again later.", status=500)
+
+    # --- フェーズ4: Stripe Checkout セッション作成（トランザクション外）---
     hour_bucket = int(datetime.now(dt_timezone.utc).timestamp()) // 3600
     idempotency_key = f"checkout_{request.user.id}_{hour_bucket}"
 
@@ -78,7 +103,6 @@ def checkout(request):
             metadata={"user_id": str(request.user.id)},
             idempotency_key=idempotency_key,
         )
-
         return redirect(session.url)
 
     except stripe.StripeError as e:

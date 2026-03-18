@@ -306,6 +306,92 @@ def test_checkout_uses_idempotency_key(user, monkeypatch, client):
     assert call_kwargs["idempotency_key"].startswith(f"checkout_{user.id}_")
 
 
+# ====================================================
+# 9. stripe_customer_id 未設定時に Customer.create() が呼ばれ
+#    user スコープの idempotency_key が渡される
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_creates_customer_with_idempotency_key_when_no_customer_exists(
+    user, monkeypatch, client
+):
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "SITE_URL", "http://localhost:8000")
+
+    BillingProfile.objects.create(user=user, status="not_subscribed")
+
+    mock_customer = MagicMock()
+    mock_customer.id = "cus_new_123"
+
+    mock_session = MagicMock()
+    mock_session.url = "https://checkout.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.Customer.create", return_value=mock_customer) as mock_create, \
+            patch("stripe.checkout.Session.create", return_value=mock_session):
+        response = client.post("/billing/checkout/")
+
+    assert response.status_code == 302
+    mock_create.assert_called_once()
+    call_kwargs = mock_create.call_args[1]
+    assert call_kwargs["idempotency_key"] == f"create_customer_{user.id}"
+
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.stripe_customer_id == "cus_new_123"
+
+
+# ====================================================
+# 10. フェーズ3で別リクエストが先に stripe_customer_id を保存していた場合、
+#     DB 上の既存値を正本として checkout session を作成する
+# ====================================================
+
+@pytest.mark.django_db
+def test_checkout_uses_db_customer_id_on_concurrent_race(user, monkeypatch, client):
+    """
+    フェーズ2（Stripe Customer.create）とフェーズ3（DB 保存）の間に
+    別リクエストが stripe_customer_id を書き込んだ場合、
+    フェーズ3 は DB 上の既存値を正本として採用し、
+    checkout session はその値で作成される。
+    """
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setattr(django_settings, "STRIPE_SECRET_KEY", "sk_test_xxx")
+    monkeypatch.setattr(django_settings, "STRIPE_PRICE_ID", "price_test_123")
+    monkeypatch.setattr(django_settings, "SITE_URL", "http://localhost:8000")
+
+    BillingProfile.objects.create(user=user, status="not_subscribed")
+
+    def concurrent_customer_create(**kwargs):
+        # 別リクエストが先に stripe_customer_id を書き込んだことをシミュレート
+        BillingProfile.objects.filter(user=user).update(
+            stripe_customer_id="cus_concurrent_123"
+        )
+        mock = MagicMock()
+        mock.id = "cus_new_999"
+        return mock
+
+    mock_session = MagicMock()
+    mock_session.url = "https://checkout.stripe.com/test"
+
+    client.force_login(user)
+    with patch("stripe.Customer.create", side_effect=concurrent_customer_create), \
+            patch("stripe.checkout.Session.create", return_value=mock_session) as mock_session_create:
+        response = client.post("/billing/checkout/")
+
+    assert response.status_code == 302
+
+    # checkout session は DB 上の既存値（cus_concurrent_123）で作成される
+    session_kwargs = mock_session_create.call_args[1]
+    assert session_kwargs["customer"] == "cus_concurrent_123"
+
+    # DB の stripe_customer_id は並行リクエストが保存した値のまま
+    bp = BillingProfile.objects.get(user=user)
+    assert bp.stripe_customer_id == "cus_concurrent_123"
+
+
 # 動作確認用・お守り的なテスト（残しておいてOK）
 @pytest.mark.django_db
 def test_pytest_django_is_working():
