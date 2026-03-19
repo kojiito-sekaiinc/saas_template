@@ -58,7 +58,45 @@
 
 ---
 
-## 3. よくあるトラブルと対応手順
+## 3. Webhook 未達時の手動再同期
+
+Webhook が届かず `BillingProfile` が Stripe と乖離した場合、`sync_billing_from_stripe` コマンドで整合性を回復できる。
+
+### 基本的な使い方
+
+```bash
+# 差分確認（DB は更新しない）
+python manage.py sync_billing_from_stripe --user-id 1 --dry-run
+python manage.py sync_billing_from_stripe --email user@example.com --dry-run
+
+# 1 ユーザーを同期
+python manage.py sync_billing_from_stripe --user-id 1
+python manage.py sync_billing_from_stripe --email user@example.com
+
+# 全ユーザーを一括同期（本番では --dry-run で差分確認後に実行）
+python manage.py sync_billing_from_stripe --all --dry-run
+python manage.py sync_billing_from_stripe --all
+```
+
+### 出力の読み方
+
+```
+UPDATED      {"user_id": 1, "diffs": {"status": {"before": "not_subscribed", "after": "active"}}}
+NO_CHANGE    {"user_id": 2, ...}
+WOULD_UPDATE {"user_id": 3, ...}   # --dry-run 時（実際には更新しない）
+ERROR        user_id=4 error=...    # このユーザーはスキップされ次へ進む
+```
+
+### 注意事項
+
+- `last_stripe_event_created` は更新しない（Webhook ロジックの管理外）
+- Stripe 側の状態は変更しない（read-only）
+- 本番での `--all` 実行前には必ず `--dry-run` で差分を確認すること
+- エラーは 1 ユーザーずつ独立しているため、一部失敗しても他は継続される
+
+---
+
+## 4. よくあるトラブルと対応手順
 
 ### ケースA：課金したのに /app/ に入れない
 **症状**
@@ -139,7 +177,7 @@
 
 ---
 
-## 4. 手動復旧ポリシー（重要）
+## 5. 手動復旧ポリシー（重要）
 - 原則：**Stripe + Webhook が真実の源泉**。手動DB更新は例外。
 - 例外対応する場合：
   - Stripe側の状態（Customer/Subscription）を必ず確認
@@ -147,7 +185,7 @@
 
 ---
 
-## 5. デプロイ前後チェック（本番運用）
+## 6. デプロイ前後チェック（本番運用）
 ### デプロイ前
 - [ ] `DEBUG=False`
 - [ ] `ALLOWED_HOSTS` に本番ドメイン
@@ -166,13 +204,13 @@
 
 ---
 
-## 6. 要注意ファイル（変更は慎重に）
+## 7. 要注意ファイル（変更は慎重に）
 - `apps/common/middleware.py`（Paywall）
 - `apps/billing/views.py`（checkout / portal / stripe_webhook）
 - `apps/billing/models.py`（BillingProfile）
 - `.env`（Stripe関連）
 
-## 7. セキュリティ関連の補足
+## 8. セキュリティ関連の補足
 
 ### HTTPS / HSTS
 - `DEBUG=False` にすると HTTPS 強制 & HSTS 有効になる
