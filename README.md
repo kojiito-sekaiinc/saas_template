@@ -60,6 +60,26 @@ This is required before running tests or the dev server. WhiteNoise serves stati
 python manage.py runserver
 ```
 
+## Testing
+
+pytest is the official test runner for this project. Do **not** use `python manage.py test`.
+
+```bash
+# Run all tests
+pytest
+
+# Run a specific app
+pytest apps/billing/
+
+# Run a specific file
+pytest apps/billing/test_sync.py
+
+# Run without verbose output (CI-friendly)
+pytest -q
+```
+
+`python_files` in `pytest.ini` covers both `tests.py` and `test_*.py`, so all test files are discovered automatically. `django.test.TestCase`-based tests (e.g. `apps/accounts/tests.py`) are fully supported by pytest and require no changes.
+
 ## Environment Variables
 
 | Variable | Description | Required |

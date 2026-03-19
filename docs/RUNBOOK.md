@@ -186,6 +186,31 @@ ERROR        user_id=4 error=...    # このユーザーはスキップされ次
 ---
 
 ## 6. デプロイ前後チェック（本番運用）
+
+### テスト実行について
+
+このプロジェクトのテストランナーは **pytest** に統一されている。`python manage.py test` は使用しない。
+
+```bash
+# 全テスト実行
+pytest
+
+# billing ロジックのみ確認
+pytest apps/billing/
+
+# 全チェック（コンパイル + Django check + pytest）
+./scripts/checks/quick_check.sh
+```
+
+pytest は `django.test.TestCase` ベースのテスト（`apps/accounts/tests.py`）も含めてすべて検出・実行する。
+
+**主なテスト実行タイミング：**
+
+- デプロイ前: `./scripts/checks/quick_check.sh`（quick_check 内で `pytest -q` を実行済み）
+- billing / paywall ロジック変更後: `pytest apps/billing/ apps/common/`
+- 課金再同期コマンド実行前の動作確認: `pytest apps/billing/test_sync.py`
+- 障害調査時: `pytest apps/billing/ -v` で詳細出力を確認
+
 ### デプロイ前
 - [ ] `DEBUG=False`
 - [ ] `ALLOWED_HOSTS` に本番ドメイン
