@@ -182,10 +182,10 @@ def test_stripe_webhook_secret_set_is_ok():
 
 
 @override_settings(STRIPE_WEBHOOK_SECRET="")
-def test_stripe_webhook_secret_empty_is_warning():
-    # STRIPE_WEBHOOK_SECRET は WARNING（ERROR ではない）
+def test_stripe_webhook_secret_empty_is_error():
+    # Webhook は課金状態の正本。未設定はテンプレートの前提が崩れるため ERROR。
     level, _, message = check_stripe_webhook_secret()
-    assert level == WARNING
+    assert level == ERROR
     assert "not set" in message
 
 
@@ -298,12 +298,12 @@ def test_exit_code_1_when_error_exists():
 @override_settings(
     DEBUG=False,
     SECRET_KEY="real-secret",
-    SITE_URL="https://example.com",
+    SITE_URL="http://example.com",  # http（非 localhost）→ WARNING のみ
     ALLOWED_HOSTS=["example.com"],
-    CSRF_TRUSTED_ORIGINS=["https://example.com"],
+    CSRF_TRUSTED_ORIGINS=[],
     STRIPE_SECRET_KEY="sk_live_xxx",
     STRIPE_PRICE_ID="price_live_xxx",
-    STRIPE_WEBHOOK_SECRET="",  # WARNING のみ
+    STRIPE_WEBHOOK_SECRET="whsec_xxx",
 )
 def test_exit_code_0_when_warning_only_without_flag():
     out = StringIO()
@@ -317,12 +317,12 @@ def test_exit_code_0_when_warning_only_without_flag():
 @override_settings(
     DEBUG=False,
     SECRET_KEY="real-secret",
-    SITE_URL="https://example.com",
+    SITE_URL="http://example.com",  # http（非 localhost）→ WARNING のみ
     ALLOWED_HOSTS=["example.com"],
-    CSRF_TRUSTED_ORIGINS=["https://example.com"],
+    CSRF_TRUSTED_ORIGINS=[],
     STRIPE_SECRET_KEY="sk_live_xxx",
     STRIPE_PRICE_ID="price_live_xxx",
-    STRIPE_WEBHOOK_SECRET="",  # WARNING のみ
+    STRIPE_WEBHOOK_SECRET="whsec_xxx",
 )
 def test_exit_code_1_when_warning_and_fail_on_warning():
     out = StringIO()

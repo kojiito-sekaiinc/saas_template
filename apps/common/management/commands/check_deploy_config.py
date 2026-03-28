@@ -115,7 +115,7 @@ def check_stripe_price_id() -> tuple[str, str, str]:
 def check_stripe_webhook_secret() -> tuple[str, str, str]:
     secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", "")
     if not secret:
-        return WARNING, "STRIPE_WEBHOOK_SECRET", "<not set>"
+        return ERROR, "STRIPE_WEBHOOK_SECRET", "<not set>"
     return OK, "STRIPE_WEBHOOK_SECRET", "set"
 
 
