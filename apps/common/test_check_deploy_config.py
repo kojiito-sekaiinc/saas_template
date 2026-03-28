@@ -129,7 +129,7 @@ def test_csrf_trusted_origins_ok_when_site_url_included():
 def test_csrf_trusted_origins_warning_when_https_site_url_missing():
     level, _, message = check_csrf_trusted_origins()
     assert level == WARNING
-    assert "https://example.com" in message
+    assert message == "SITE_URL not in CSRF_TRUSTED_ORIGINS"
 
 
 @override_settings(

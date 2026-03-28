@@ -16,6 +16,7 @@ apps/common/management/commands/check_deploy_config.py
 """
 import json
 import sys
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -42,9 +43,9 @@ def check_debug_and_secret_key() -> tuple[str, str, str]:
     secret_key = getattr(settings, "SECRET_KEY", "")
 
     if not debug and not secret_key:
-        return ERROR, "SECRET_KEY", "SECRET_KEY is missing while DEBUG=False"
+        return ERROR, "SECRET_KEY", "SECRET_KEY=<empty>"
     if debug:
-        return WARNING, "DEBUG", "DEBUG=True (not suitable for production)"
+        return WARNING, "DEBUG", "DEBUG=True"
     return OK, "DEBUG", "DEBUG=False"
 
 
@@ -52,39 +53,36 @@ def check_site_url() -> tuple[str, str, str]:
     site_url = getattr(settings, "SITE_URL", "")
 
     if not site_url:
-        return ERROR, "SITE_URL", "SITE_URL is not set"
+        return ERROR, "SITE_URL", "<not set>"
 
-    _local = ("localhost", "127.0.0.1")
+    hostname = urlparse(site_url).hostname or ""
+    _local = {"localhost", "127.0.0.1"}
 
-    if any(h in site_url for h in _local):
-        return WARNING, "SITE_URL", f"SITE_URL is localhost: {site_url}"
+    if hostname in _local:
+        return WARNING, "SITE_URL", hostname
 
     if site_url.startswith("http://"):
-        return WARNING, "SITE_URL", f"SITE_URL uses http (not https): {site_url}"
+        return WARNING, "SITE_URL", site_url
 
     if site_url.startswith("https://"):
-        return OK, "SITE_URL", f"SITE_URL={site_url}"
+        return OK, "SITE_URL", site_url
 
-    return WARNING, "SITE_URL", f"SITE_URL has unexpected scheme: {site_url}"
+    return WARNING, "SITE_URL", site_url
 
 
 def check_allowed_hosts() -> tuple[str, str, str]:
     allowed_hosts = getattr(settings, "ALLOWED_HOSTS", [])
 
     if not allowed_hosts:
-        return ERROR, "ALLOWED_HOSTS", "ALLOWED_HOSTS is empty"
+        return ERROR, "ALLOWED_HOSTS", "<empty>"
 
     _local = {"localhost", "127.0.0.1"}
     non_local = [h for h in allowed_hosts if h not in _local]
 
     if not non_local:
-        return (
-            WARNING,
-            "ALLOWED_HOSTS",
-            f"ALLOWED_HOSTS contains only local addresses: {allowed_hosts}",
-        )
+        return WARNING, "ALLOWED_HOSTS", ",".join(allowed_hosts)
 
-    return OK, "ALLOWED_HOSTS", f"ALLOWED_HOSTS={allowed_hosts}"
+    return OK, "ALLOWED_HOSTS", ",".join(allowed_hosts)
 
 
 def check_csrf_trusted_origins() -> tuple[str, str, str]:
@@ -95,34 +93,30 @@ def check_csrf_trusted_origins() -> tuple[str, str, str]:
     if site_url.startswith("https://"):
         normalized = site_url.rstrip("/")
         if normalized not in csrf_origins:
-            return (
-                WARNING,
-                "CSRF_TRUSTED_ORIGINS",
-                f"SITE_URL ({normalized}) is not in CSRF_TRUSTED_ORIGINS: {csrf_origins}",
-            )
+            return WARNING, "CSRF_TRUSTED_ORIGINS", "SITE_URL not in CSRF_TRUSTED_ORIGINS"
 
-    return OK, "CSRF_TRUSTED_ORIGINS", f"CSRF_TRUSTED_ORIGINS={csrf_origins}"
+    return OK, "CSRF_TRUSTED_ORIGINS", "ok"
 
 
 def check_stripe_secret_key() -> tuple[str, str, str]:
     key = getattr(settings, "STRIPE_SECRET_KEY", "")
     if not key:
-        return ERROR, "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY is not set"
-    return OK, "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY is set"
+        return ERROR, "STRIPE_SECRET_KEY", "<not set>"
+    return OK, "STRIPE_SECRET_KEY", "set"
 
 
 def check_stripe_price_id() -> tuple[str, str, str]:
     price_id = getattr(settings, "STRIPE_PRICE_ID", "")
     if not price_id:
-        return ERROR, "STRIPE_PRICE_ID", "STRIPE_PRICE_ID is not set"
-    return OK, "STRIPE_PRICE_ID", f"STRIPE_PRICE_ID={price_id}"
+        return ERROR, "STRIPE_PRICE_ID", "<not set>"
+    return OK, "STRIPE_PRICE_ID", price_id
 
 
 def check_stripe_webhook_secret() -> tuple[str, str, str]:
     secret = getattr(settings, "STRIPE_WEBHOOK_SECRET", "")
     if not secret:
-        return WARNING, "STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET is not set"
-    return OK, "STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET is set"
+        return WARNING, "STRIPE_WEBHOOK_SECRET", "<not set>"
+    return OK, "STRIPE_WEBHOOK_SECRET", "set"
 
 
 # チェック実行順序（仕様書に準拠）
