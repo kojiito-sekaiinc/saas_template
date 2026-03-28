@@ -22,6 +22,7 @@ from apps.common.management.commands.check_deploy_config import (
     check_csrf_trusted_origins,
     check_debug_and_secret_key,
     check_site_url,
+    check_site_url_in_allowed_hosts,
     check_stripe_price_id,
     check_stripe_secret_key,
     check_stripe_webhook_secret,
@@ -106,6 +107,54 @@ def test_allowed_hosts_local_only_is_warning():
     level, _, message = check_allowed_hosts()
     assert level == WARNING
     assert "local" in message
+
+
+# ---------------------------------------------------------------------------
+# check_site_url_in_allowed_hosts
+# ---------------------------------------------------------------------------
+
+@override_settings(SITE_URL="https://example.com", ALLOWED_HOSTS=["api.example.com"])
+def test_site_url_hostname_not_in_allowed_hosts_is_warning():
+    level, name, message = check_site_url_in_allowed_hosts()
+    assert level == WARNING
+    assert name == "SITE_URL_IN_ALLOWED_HOSTS"
+    assert "example.com" in message
+
+
+@override_settings(SITE_URL="https://example.com", ALLOWED_HOSTS=["example.com"])
+def test_site_url_hostname_in_allowed_hosts_is_ok():
+    level, name, _ = check_site_url_in_allowed_hosts()
+    assert level == OK
+    assert name == "SITE_URL_IN_ALLOWED_HOSTS"
+
+
+@override_settings(SITE_URL="https://example.com:8443", ALLOWED_HOSTS=["example.com"])
+def test_site_url_with_port_hostname_matches_allowed_hosts():
+    # urlparse で hostname を抽出するためポートは除去される
+    level, _, _ = check_site_url_in_allowed_hosts()
+    assert level == OK
+
+
+@override_settings(SITE_URL="", ALLOWED_HOSTS=["example.com"])
+def test_site_url_empty_skips_check():
+    # SITE_URL 未設定は他チェックで ERROR 済み → このチェックはスキップ
+    level, _, message = check_site_url_in_allowed_hosts()
+    assert level == OK
+    assert message == "skip"
+
+
+@override_settings(SITE_URL="https://example.com", ALLOWED_HOSTS=[])
+def test_allowed_hosts_empty_skips_check():
+    # ALLOWED_HOSTS 空は他チェックで ERROR 済み → このチェックはスキップ
+    level, _, message = check_site_url_in_allowed_hosts()
+    assert level == OK
+    assert message == "skip"
+
+
+@override_settings(SITE_URL="https://example.com", ALLOWED_HOSTS=["*"])
+def test_wildcard_in_allowed_hosts_is_ok():
+    level, _, _ = check_site_url_in_allowed_hosts()
+    assert level == OK
 
 
 # ---------------------------------------------------------------------------

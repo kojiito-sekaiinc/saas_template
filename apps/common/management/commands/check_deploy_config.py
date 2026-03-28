@@ -98,6 +98,31 @@ def check_csrf_trusted_origins() -> tuple[str, str, str]:
     return OK, "CSRF_TRUSTED_ORIGINS", "ok"
 
 
+def check_site_url_in_allowed_hosts() -> tuple[str, str, str]:
+    """
+    SITE_URL のホスト名が ALLOWED_HOSTS に含まれるか確認する。
+
+    SITE_URL 未設定・ALLOWED_HOSTS 空など前提が崩れている場合はスキップ（OK を返す）。
+    それぞれの個別チェックで既に ERROR が出るため、二重報告を避けるため。
+    ALLOWED_HOSTS に "*" が含まれる場合は全ホスト許可とみなし OK。
+    """
+    site_url = getattr(settings, "SITE_URL", "")
+    allowed_hosts = getattr(settings, "ALLOWED_HOSTS", [])
+
+    # 前提が崩れている場合はスキップ
+    if not site_url or not allowed_hosts:
+        return OK, "SITE_URL_IN_ALLOWED_HOSTS", "skip"
+
+    hostname = urlparse(site_url).hostname
+    if not hostname:
+        return OK, "SITE_URL_IN_ALLOWED_HOSTS", "skip"
+
+    if "*" in allowed_hosts or hostname in allowed_hosts:
+        return OK, "SITE_URL_IN_ALLOWED_HOSTS", f"{hostname} in ALLOWED_HOSTS"
+
+    return WARNING, "SITE_URL_IN_ALLOWED_HOSTS", f"{hostname} not in ALLOWED_HOSTS"
+
+
 def check_stripe_secret_key() -> tuple[str, str, str]:
     key = getattr(settings, "STRIPE_SECRET_KEY", "")
     if not key:
@@ -124,6 +149,7 @@ _CHECKS = [
     check_debug_and_secret_key,
     check_site_url,
     check_allowed_hosts,
+    check_site_url_in_allowed_hosts,
     check_csrf_trusted_origins,
     check_stripe_secret_key,
     check_stripe_price_id,
