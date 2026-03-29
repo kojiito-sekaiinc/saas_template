@@ -145,6 +145,17 @@ ERROR が 1 件でもあると exit(1) になります。詳細は `docs/RUNBOOK
 
 ---
 
+## Stripe Setup
+
+1. Stripe Dashboard で Product を作成
+2. Price ID を取得（`STRIPE_PRICE_ID` に設定）
+3. Webhook を設定
+   - endpoint: `{SITE_URL}/stripe/webhook`
+   - events: `customer.subscription.created` / `updated` / `deleted`
+4. Webhook Secret を取得（`STRIPE_WEBHOOK_SECRET` に設定）
+
+---
+
 ## Deploy
 
 Railway を使用:
