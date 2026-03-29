@@ -145,6 +145,22 @@ ERROR が 1 件でもあると exit(1) になります。詳細は `docs/RUNBOOK
 
 ---
 
+## Deploy
+
+Railway を使用:
+
+1. GitHub リポジトリを接続
+2. 環境変数を設定（[Environment Variables](#environment-variables) 参照）
+3. Deploy
+
+デプロイ前に必ず実行:
+
+```bash
+python manage.py check_deploy_config --fail-on-warning
+```
+
+---
+
 ## Project Structure
 
 ```
