@@ -83,9 +83,17 @@
    - `customer.subscription.updated` 等が **200** で配信されているか？
 4. Stripe 側が `active` なのに DB が更新されない → [ケース C](#ケース-c-webhook-が機能していない)
 
-**緊急回避**:
-- Stripe 側で `active` が確認できた場合のみ、Admin で一時的に `BillingProfile.status = "active"` に救済。
-- 後で必ず Webhook を復旧し、`sync_billing_from_stripe` で整合性を確認する。
+**復旧手順（推奨順）**:
+
+1. まず `sync_billing_from_stripe` で修正する（原則）:
+   ```bash
+   python manage.py sync_billing_from_stripe --email user@example.com --dry-run
+   python manage.py sync_billing_from_stripe --email user@example.com
+   ```
+2. Admin での手動修正は本当に緊急時のみ（sync が使えない場合など）:
+   - Stripe 側で `active` が確認できた場合のみ `BillingProfile.status = "active"` に変更
+   - 変更した場合は「いつ・誰が・なぜ」を Issue / メモに残す
+   - 事後に必ず `sync_billing_from_stripe --dry-run` で整合性を確認する
 
 ---
 
