@@ -30,8 +30,8 @@ cp .env.example .env
 # 4. DB セットアップ
 python manage.py migrate
 
-# 5. 静的ファイルを収集（テスト・開発サーバー起動前に必須）
-python manage.py collectstatic --noinput
+# 5. 静的ファイルを収集（本番時のみ必要）
+# python manage.py collectstatic --noinput
 
 # 6. 開発サーバーを起動
 python manage.py runserver
