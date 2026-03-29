@@ -56,7 +56,11 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-ブラウザで http://localhost:8000 を開いてください。
+アクセス:
+
+- トップページ: http://localhost:8000
+- サインアップ: http://localhost:8000/accounts/signup/
+- アプリ領域: http://localhost:8000/app/
 
 ---
 
