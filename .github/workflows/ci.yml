@@ -29,10 +29,19 @@ jobs:
       - name: テスト実行
         env:
           DEBUG: "True"
-          SECRET_KEY: "ci-secret-key-for-tests"
+          SECRET_KEY: "ci-secret-key"
           SITE_URL: "http://localhost:8000"
           STRIPE_SECRET_KEY: "sk_test_dummy"
           STRIPE_PRICE_ID: "price_dummy"
           STRIPE_WEBHOOK_SECRET: "whsec_dummy"
         run: pytest
-        
+
+      - name: デプロイ設定チェック
+        env:
+          DEBUG: "False"
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: python manage.py check_deploy_config --fail-on-warning
