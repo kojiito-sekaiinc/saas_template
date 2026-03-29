@@ -17,7 +17,15 @@ pip install -r requirements.txt
 
 # 3. 環境変数をコピーして編集
 cp .env.example .env
-# .env を開いて必要な値を設定（最低限: SECRET_KEY, Stripe キー）
+# .env の最低設定例（開発用）:
+#
+#   SECRET_KEY=your-secret-key
+#   SITE_URL=http://localhost:8000
+#
+#   # Stripe（開発時はダミーでOK）
+#   STRIPE_SECRET_KEY=sk_test_dummy
+#   STRIPE_PRICE_ID=price_dummy
+#   STRIPE_WEBHOOK_SECRET=whsec_dummy
 
 # 4. DB セットアップ
 python manage.py migrate
