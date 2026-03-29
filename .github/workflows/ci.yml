@@ -41,6 +41,7 @@ jobs:
           DEBUG: "False"
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SITE_URL: ${{ secrets.SITE_URL }}
+          ALLOWED_HOSTS: "example.com"
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
