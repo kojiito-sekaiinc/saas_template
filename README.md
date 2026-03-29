@@ -1,175 +1,191 @@
 # Django SaaS Subscription Template
 
-A production-ready Django template for building subscription-based SaaS in days, not weeks.  
-Includes email-based authentication, 7-day free trial, Stripe subscriptions, secure webhooks, and Customer Portal.  
-Designed for fast iteration, safe monetization, and service-by-service SaaS launch.
+メール認証・7日間無料トライアル・Stripe サブスクリプション・Customer Portal を備えた
+本番対応 Django テンプレート。新サービスを数週間ではなく数日でリリースするために設計されています。
 
-## Technology Stack
+---
 
-- **Backend**: Django
-- **Frontend**: Django Templates + Tailwind CSS
-- **Database**: PostgreSQL (SQLite for local development)
-- **Payments**: Stripe (subscription model)
-- **Deployment**: Railway
-- **Static Files**: WhiteNoise
-
-## Runtime
-
-- Python 3.11.x (recommended)
-- Python 3.12.x (supported)
-- Python 3.14 is NOT supported (Django compatibility issue)
-
-## Local Setup
-
-1. Create a virtual environment:
+## Quick Start（5分で起動）
 
 ```bash
+# 1. 仮想環境を作成して有効化
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-2. Install dependencies:
-
-```bash
+# 2. 依存パッケージをインストール
 pip install -r requirements.txt
-```
 
-3. Copy environment variables:
-
-```bash
+# 3. 環境変数をコピーして編集
 cp .env.example .env
-```
+# .env を開いて必要な値を設定（最低限: SECRET_KEY, Stripe キー）
 
-4. Run migrations:
-
-```bash
+# 4. DB セットアップ
 python manage.py migrate
-```
 
-5. Collect static files:
-
-```bash
+# 5. 静的ファイルを収集（テスト・開発サーバー起動前に必須）
 python manage.py collectstatic --noinput
-```
 
-This is required before running tests or the dev server. WhiteNoise serves static files in all environments and expects `staticfiles/` to exist.
-
-6. Start the development server:
-
-```bash
+# 6. 開発サーバーを起動
 python manage.py runserver
 ```
 
-## Testing
+ブラウザで http://localhost:8000 を開いてください。
 
-pytest is the official test runner for this project. Do **not** use `python manage.py test`.
+---
 
-```bash
-# Run all tests
-pytest
+## Technology Stack
 
-# Run a specific app
-pytest apps/billing/
+| 分類 | 技術 |
+|---|---|
+| Backend | Django |
+| Frontend | Django Templates + Tailwind CSS |
+| Database | PostgreSQL（本番）/ SQLite（ローカル開発） |
+| Payments | Stripe（サブスクリプション） |
+| Deployment | Railway |
+| Static Files | WhiteNoise |
 
-# Run a specific file
-pytest apps/billing/test_sync.py
+**Runtime:** Python 3.11.x（推奨）/ 3.12.x（サポート）
+Python 3.14 は Django 互換性の問題により非対応。
 
-# Run without verbose output (CI-friendly)
-pytest -q
-```
-
-`python_files` in `pytest.ini` covers both `tests.py` and `test_*.py`, so all test files are discovered automatically. `django.test.TestCase`-based tests (e.g. `apps/accounts/tests.py`) are fully supported by pytest and require no changes.
+---
 
 ## Environment Variables
 
 | Variable | Description | Required |
-|----------|-------------|----------|
-| `SECRET_KEY` | Django secret key | Yes (production) |
-| `DEBUG` | Debug mode (True/False) | No (default: False) |
-| `ALLOWED_HOSTS` | Comma-separated list of allowed hosts | No |
-| `SITE_URL` | Base URL of the site. Used to build Stripe Checkout and Portal redirect URLs. If unset in production, Stripe redirects will point to localhost | Yes (production) |
-| `CSRF_TRUSTED_ORIGINS` | Comma-separated trusted origins for CSRF. Auto-populated from `SITE_URL` if HTTPS | No (auto-populated) |
-| `DATABASE_URL` | PostgreSQL connection URL | No (uses SQLite if empty) |
-| `STRIPE_SECRET_KEY` | Stripe secret API key | Yes (for billing) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | Yes (for billing) |
-| `STRIPE_PRICE_ID` | Stripe Price ID for subscription | Yes (for billing) |
-| `TRUSTED_PROXY_COUNT` | Number of trusted reverse proxies (set `1` on Railway) | No (default: `0`) |
-| `DJANGO_STATICFILES_MANIFEST` | Enable WhiteNoise `CompressedManifestStaticFilesStorage` for hashed static file URLs. Set `1` in production to enable cache-busting. Requires `collectstatic` to be run first. | No (default: `0`) |
+|---|---|---|
+| `SECRET_KEY` | Django シークレットキー | Yes（本番） |
+| `DEBUG` | デバッグモード（True/False）| No（デフォルト: False） |
+| `ALLOWED_HOSTS` | 許可するホスト名（カンマ区切り）| No |
+| `SITE_URL` | サイトの Base URL。Stripe Checkout・Portal のリダイレクト先に使用。未設定だと localhost 向けになる | Yes（本番） |
+| `CSRF_TRUSTED_ORIGINS` | CSRF 許可オリジン（カンマ区切り）。HTTPS の SITE_URL から自動補完 | No（自動補完） |
+| `DATABASE_URL` | PostgreSQL 接続 URL | No（空なら SQLite） |
+| `STRIPE_SECRET_KEY` | Stripe シークレット API キー | Yes（課金機能） |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Webhook 署名シークレット | Yes（課金機能） |
+| `STRIPE_PRICE_ID` | サブスクリプション用 Stripe Price ID | Yes（課金機能） |
+| `TRUSTED_PROXY_COUNT` | 信頼するリバースプロキシ数（Railway 本番: `1`）| No（デフォルト: `0`） |
+| `DJANGO_STATICFILES_MANIFEST` | WhiteNoise の manifest モードを有効化。本番で cache-busting を使う場合は `1`。`collectstatic` 実行が前提 | No（デフォルト: `0`） |
+
+---
+
+## Testing
+
+テストランナーは **pytest** に統一されています。`python manage.py test` は使用しないでください。
+
+```bash
+# 全テスト実行
+pytest
+
+# アプリを絞って実行
+pytest apps/billing/
+pytest apps/common/
+
+# 特定ファイルを実行
+pytest apps/billing/test_sync.py
+
+# 全品質チェック（compile + Django check + pytest）
+./scripts/checks/quick_check.sh
+```
+
+`django.test.TestCase` ベースのテスト（`apps/accounts/tests.py`）も pytest で自動検出・実行されます。
+
+---
+
+## Pre-deploy Check
+
+本番デプロイ前に設定不備を検出するコマンドが用意されています。
+
+```bash
+# テキスト形式で確認
+python manage.py check_deploy_config
+
+# JSON 形式（CI やスクリプト連携用）
+python manage.py check_deploy_config --json
+
+# WARNING でも失敗扱いにしたい場合
+python manage.py check_deploy_config --fail-on-warning
+```
+
+**出力例（本番想定）:**
+
+```
+OK       DEBUG                    DEBUG=False
+OK       SITE_URL                 https://example.com
+OK       ALLOWED_HOSTS            example.com
+OK       SITE_URL_IN_ALLOWED_HOSTS example.com in ALLOWED_HOSTS
+OK       CSRF_TRUSTED_ORIGINS     ok
+OK       STRIPE_SECRET_KEY        set
+OK       STRIPE_PRICE_ID          price_live_xxx
+OK       STRIPE_WEBHOOK_SECRET    set
+
+Summary: ok=8 warning=0 error=0
+```
+
+ERROR が 1 件でもあると exit(1) になります。詳細は `docs/RUNBOOK.md` を参照してください。
+
+---
 
 ## Project Structure
 
 ```
 ├── apps/
-│   ├── accounts/     # Authentication and user profiles
-│   ├── billing/      # Stripe integration and subscriptions
-│   ├── app/          # Service-specific functionality
-│   └── common/       # Shared utilities and middleware
-├── config/           # Django project settings
-├── templates/        # HTML templates
-├── static/           # Static files (CSS, JS, images)
-└── requirements.txt  # Python dependencies
+│   ├── accounts/     # 認証・ユーザープロフィール（free_until）
+│   ├── billing/      # Stripe 連携・サブスクリプション管理
+│   ├── app/          # サービス固有の機能（新機能はここだけ追加）
+│   └── common/       # Paywall ミドルウェア・共有ユーティリティ
+├── config/           # Django 設定
+├── templates/        # HTML テンプレート（旧系統）
+├── ui/               # Sekai UI コンポーネント・レイアウト
+├── static/           # 静的ファイル
+└── docs/             # RUNBOOK・仕様書
 ```
 
-## Notes
+---
 
-- This is a **reusable template**. When creating new services, modify only `apps/app`.
-- Do not change billing or paywall logic unless absolutely necessary.
-- Subscription: 980 JPY/month with 7-day free trial (managed by application, not Stripe).
+## Core Business Rules
+
+- **サブスクリプション**: 月額 980 JPY、単一プランのみ
+- **無料トライアル**: 登録後 7 日間（`Profile.free_until` で管理、Stripe の trial 機能は使用しない）
+- **有料ゾーン**: `/app/` 配下すべて（`PaywallMiddleware` が保護）
+- **アクセス条件**: 無料期間内 OR `BillingProfile.status == "active"`
+- **課金状態の正本**: Stripe Webhook（フロントエンドのリダイレクトやクエリパラメータは使用しない）
+
+---
 
 ## Known Limitations
 
-### Tailwind CSS (Sekai UI 系) — 本番デプロイ前に必須対応
+### Tailwind CSS（Sekai UI）— 本番デプロイ前に必須対応
 
 `ui/layouts/base.html` は開発利便性のため Tailwind Play CDN を使用しています。
 本番環境ではこの CDN を **必ず静的ファイルに置き換えてください**。
 
-対応手順：
-
+対応手順:
 1. `tailwindcss` CLI で CSS をビルドし `static/css/sekai.css` として配置する
-2. `ui/layouts/base.html` の `<script src="https://cdn.tailwindcss.com">` を
-   `<link rel="stylesheet" href="{% static 'css/sekai.css' %}">` に置き換える
+2. `<script src="https://cdn.tailwindcss.com">` を `<link rel="stylesheet" href="{% static 'css/sekai.css' %}">` に置き換える
 
-CDN のまま本番稼働させると、CSP 設定・外部通信制限・オフライン環境において
-Sekai UI を使用するすべてのページのスタイルが消失します。
-
-Google Fonts（Inter）も同様に外部 CDN を経由しているため、制限環境では
-フォントファイルをセルフホストする対応も併せて実施してください。
+CDN のまま本番稼働させると、CSP 設定・外部通信制限・オフライン環境でスタイルが消失します。
+Google Fonts（Inter）も同様に外部 CDN を経由しているため、制限環境ではセルフホストしてください。
 
 ### フロントエンド構成（混在期）
 
-現在、以下の 2 系統が混在しています：
+現在 2 系統が混在しています:
 
-- **旧系統**（accounts・billing・home・dashboard）:
-  `templates/base.html` → `static/css/app.css`（WhiteNoise 配信）
-- **Sekai UI 系**（customers 以降）:
-  `ui/layouts/base.html` → Google Fonts CDN + Tailwind CDN（開発用）
+- **旧系統**（accounts・billing・home・dashboard）: `templates/base.html` → `static/css/app.css`
+- **Sekai UI 系**（customers 以降）: `ui/layouts/base.html` → Tailwind CDN（開発用）
 
 新規ページは Sekai UI 系で実装してください。旧系統は将来の移行対象です。
-本番前に上記の CDN 対応を Sekai UI 系に対して実施する必要があります。
 
-### ログイン防御の範囲（credential stuffing）
+### ログイン防御の範囲
 
-ログイン保護は `django-axes` によるアカウント（email）単位のロックアウトが有効です（5 回失敗で 1 時間ロック）。特定アカウントへの総当たり攻撃は防ぎます。
+`django-axes` によるアカウント（email）単位のロックアウトが有効です（5 回失敗で 1 時間ロック）。
+IP を変えながら多数アカウントを試す **credential stuffing** はカバー範囲外です（設計上の意図的なトレードオフ）。
+詳細は `docs/RUNBOOK.md` の「セキュリティ」セクションを参照してください。
 
-一方、IP を変えながら多数のアカウントを試す **credential stuffing** はカバー範囲外です。`django-axes` は IP 軸とアカウント軸で個別に閾値を設定できないため、IP ベースの制限を追加すると共有 IP 環境での正当ユーザー誤ロックアウトが発生しやすくなります。この制限は設計上の意図的なトレードオフです。
+### Rate Limiting Cache（LocMemCache）
 
-credential stuffing への対策が必要な場合は、CDN/WAF（Cloudflare 等）やリバースプロキシ側でのレートリミットで補完してください。詳細は `docs/RUNBOOK.md` の「セキュリティ関連の補足」を参照してください。
+サインアップのレートリミットは `LocMemCache`（プロセスローカル）を使用しています。
+以下の条件を満たす場合のみ正常に機能します:
 
-### Rate Limiting Cache (LocMemCache)
+- Gunicorn シングルワーカー（`--workers 1`）
+- Railway シングルインスタンス（水平スケールなし）
 
-The signup rate limiter uses Django's `LocMemCache`, which is **process-local**.
-This works correctly only under the following conditions:
-
-- Single Gunicorn worker (`--workers 1`)
-- Single Railway instance (no horizontal scaling)
-
-**Migrate to Redis when any of the following apply:**
-
-- Increasing Gunicorn workers to 2 or more
-- Scaling to multiple Railway instances
-- Rate limit counters must be shared reliably across processes
-
-Migration steps:
-1. Add a Redis plugin on Railway and obtain `REDIS_URL`
-2. Add `django-redis` to `requirements.txt`
-3. Update `CACHES` in `config/settings.py` to use `django_redis.cache.RedisCache` with `REDIS_URL`
+複数ワーカー・複数インスタンスに移行する際は Redis（`django-redis`）へ切り替えてください。
