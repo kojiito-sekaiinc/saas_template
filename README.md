@@ -179,6 +179,9 @@ Railway を使用:
 
 1. GitHub リポジトリを接続
 2. 環境変数を設定（[Environment Variables](#environment-variables) 参照）
+   - **重要**: `SECRET_KEY` は必ず本番用に変更する
+   - **重要**: `SITE_URL` は本番ドメインに設定する
+   - **重要**: `STRIPE_*` は本番キーを使用する
 3. Deploy
 
 デプロイ前に必ず実行:
