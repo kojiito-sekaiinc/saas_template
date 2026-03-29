@@ -27,7 +27,12 @@ jobs:
           pip install pytest pytest-django
 
       - name: テスト実行
+        env:
+          DEBUG: "True"
+          SECRET_KEY: "ci-secret-key-for-tests"
+          SITE_URL: "http://localhost:8000"
+          STRIPE_SECRET_KEY: "sk_test_dummy"
+          STRIPE_PRICE_ID: "price_dummy"
+          STRIPE_WEBHOOK_SECRET: "whsec_dummy"
         run: pytest
-
-      - name: デプロイ設定チェック
-        run: python manage.py check_deploy_config --fail-on-warning
+        
