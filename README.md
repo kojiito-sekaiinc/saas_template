@@ -189,6 +189,16 @@ python manage.py check_deploy_config --fail-on-warning
 
 ---
 
+## Where to start
+
+新機能はここに追加:
+
+```
+apps/app/
+```
+
+---
+
 ## Core Business Rules
 
 - **サブスクリプション**: 月額 980 JPY、単一プランのみ
