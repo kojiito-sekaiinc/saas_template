@@ -164,6 +164,13 @@ ERROR が 1 件でもあると exit(1) になります。詳細は `docs/RUNBOOK
    - events: `customer.subscription.created` / `updated` / `deleted`
 4. Webhook Secret を取得（`STRIPE_WEBHOOK_SECRET` に設定）
 
+テストカード:
+
+```
+4242 4242 4242 4242
+任意の未来日付 / CVC 任意
+```
+
 ---
 
 ## Deploy
