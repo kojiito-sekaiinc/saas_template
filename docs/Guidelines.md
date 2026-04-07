@@ -213,3 +213,68 @@ These guidelines exist to:
 
 When in doubt:
 > **Choose safety and simplicity over speed.**
+
+---
+
+## 14. Testing Conventions
+
+### テストランナー
+
+- **pytest 統一**。`django.test.TestCase` は使用しない。
+- `python manage.py test` も使用しない。
+- 実行コマンド: `pytest` / `pytest apps/billing/` / `pytest -v`
+
+### テストスタイル
+
+```python
+# ✅ 正しいスタイル
+import pytest
+
+@pytest.mark.django_db
+def test_something(client):
+    assert True
+
+# ❌ 使用しない
+from django.test import TestCase
+
+class SomeTest(TestCase):
+    def test_something(self):
+        self.assertTrue(True)
+```
+
+### DB アクセス
+
+- DB を使うテストには `@pytest.mark.django_db` を付ける。
+- フィクスチャで DB が必要な場合は `db` または `django_db_setup` を引数に取る。
+
+### フィクスチャの配置ルール
+
+| 配置場所 | 用途 |
+|---|---|
+| `conftest.py`（プロジェクトルート） | 複数モジュールで共用するフィクスチャ（`make_user` 等） |
+| 各テストモジュール先頭 | そのモジュール固有のフィクスチャ |
+
+### ファクトリパターン
+
+- 単純なオブジェクト生成は `User.objects.create_user()` 等を直接呼ぶ。
+- 引数違いで複数生成する場合は `make_user` ファクトリフィクスチャ（`conftest.py` 参照）を使う。
+- `factory_boy` 等の外部ファクトリライブラリは現時点では導入しない。
+
+### 設定のオーバーライド
+
+```python
+# 関数単位
+@override_settings(DEBUG=True)
+def test_debug_mode(client):
+    ...
+
+# フィクスチャ単位（複数テストに共通する場合）
+@pytest.fixture(autouse=True)
+def lockout_settings(settings):
+    settings.AXES_FAILURE_LIMIT = 3
+```
+
+### モック
+
+- Stripe 等の外部 API は `unittest.mock.patch()` でモックする。
+- `settings` の一時変更には `monkeypatch.setattr(settings, "KEY", value)` も可。
