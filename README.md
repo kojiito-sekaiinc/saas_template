@@ -116,8 +116,12 @@ Python 3.14 は Django 互換性の問題により非対応。
 
 テストランナーは **pytest** に統一されています。`python manage.py test` は使用しないでください。
 
+**.env なしで pytest を実行できます。** テスト実行には `config.settings_test` を使用するため、Stripe キーや `SECRET_KEY` を設定せずにすぐ動かせます。
+
+> `.env`（`runserver` や Stripe の実動作確認）と pytest（テスト）は独立しています。
+
 ```bash
-# 全テスト実行
+# clone 後すぐ実行可能（.env 不要）
 pytest
 
 # アプリを絞って実行
@@ -130,8 +134,6 @@ pytest apps/billing/test_sync.py
 # 全品質チェック（compile + Django check + pytest）
 ./scripts/checks/quick_check.sh
 ```
-
-`django.test.TestCase` ベースのテスト（`apps/accounts/tests.py`）も pytest で自動検出・実行されます。
 
 ---
 
