@@ -1,24 +1,29 @@
-# Django
-Django>=5.1,<5.2
-
-# Database
-psycopg[binary]>=3.2,<4
-
-# Payments
-stripe>=11.0,<12
-
-# Static files
-whitenoise>=6.8,<7
-
-# Production server
-gunicorn>=23.0,<24
-
-# Environment variables
-python-dotenv>=1.0,<2
-
-# Security
-django-axes>=7.0,<8
-
-# Testing
-pytest>=8,<9
-pytest-django
+asgiref==3.11.1
+certifi==2026.2.25
+charset-normalizer==3.4.5
+Django==5.1.15
+django-axes==7.1.0
+greenlet==3.5.2
+gunicorn==23.0.0
+idna==3.11
+iniconfig==2.3.0
+packaging==26.0
+playwright==1.60.0
+pluggy==1.6.0
+psycopg==3.3.3
+psycopg-binary==3.3.3
+pyee==13.0.1
+Pygments==2.19.2
+pytest==8.4.2
+pytest-base-url==2.1.0
+pytest-django==4.12.0
+pytest-playwright==0.8.0
+python-dotenv==1.2.2
+python-slugify==8.0.4
+requests==2.32.5
+sqlparse==0.5.5
+stripe==11.6.0
+text-unidecode==1.3
+typing_extensions==4.15.0
+urllib3==2.6.3
+whitenoise==6.12.0

@@ -335,3 +335,22 @@ Before implementing a new feature:
 Do not build features only because they are easy.
 
 Always identify what should not be built.
+
+
+## Testing Rules
+
+After UI changes:
+
+1. Run Playwright tests
+
+npx playwright test
+
+2. Check:
+
+- console errors
+
+- failed network requests
+
+- visual layout problems
+
+3. Do not mark task complete until Playwright passes
