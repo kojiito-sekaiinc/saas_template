@@ -1,0 +1,28 @@
+<!-- @dsCard group="Spacing" viewport="700x190" name="Spacing scale" subtitle="8px base — spacing separates content, not borders" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; padding: 24px; background: var(--color-bg); }
+  .row { display: flex; align-items: flex-end; gap: 18px; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .bar { width: 100%; background: var(--color-primary-subtle); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); }
+  .n { font: 500 12px/1.2 var(--font-sans); color: var(--color-text); }
+  .v { font: 400 10px/1.2 var(--font-mono); color: var(--color-text-subtle); }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="col"><div class="bar" style="height:8px;width:8px"></div><span class="n">2</span><span class="v">8</span></div>
+  <div class="col"><div class="bar" style="height:12px;width:12px"></div><span class="n">3</span><span class="v">12</span></div>
+  <div class="col"><div class="bar" style="height:16px;width:16px"></div><span class="n">4</span><span class="v">16</span></div>
+  <div class="col"><div class="bar" style="height:20px;width:20px"></div><span class="n">5</span><span class="v">20</span></div>
+  <div class="col"><div class="bar" style="height:24px;width:24px"></div><span class="n">6</span><span class="v">24</span></div>
+  <div class="col"><div class="bar" style="height:32px;width:32px"></div><span class="n">8</span><span class="v">32</span></div>
+  <div class="col"><div class="bar" style="height:40px;width:40px"></div><span class="n">10</span><span class="v">40</span></div>
+  <div class="col"><div class="bar" style="height:48px;width:48px"></div><span class="n">12</span><span class="v">48</span></div>
+</div>
+</body>
+</html>

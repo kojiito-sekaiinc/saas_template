@@ -1,0 +1,30 @@
+/* ==========================================================================
+   Sekai UI System — Typography tokens
+   Inter for Latin; Noto Sans JP for Japanese glyphs (product copy is JP).
+   Hierarchy is built with size + weight only — calm, readable, restrained.
+   ========================================================================== */
+
+:root {
+  /* Families */
+  --font-sans: "Inter", "Noto Sans JP", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Sizes (px scale — do not introduce values outside this set) */
+  --text-xs: 12px;   /* metadata, timestamps, hints */
+  --text-sm: 14px;   /* labels, table cells, captions, buttons */
+  --text-md: 16px;   /* primary body text */
+  --text-lg: 20px;   /* section headings, card titles */
+  --text-xl: 24px;   /* page titles, modal headings */
+
+  /* Line heights */
+  --leading-tight: 1.3;    /* titles, large headings */
+  --leading-normal: 1.4;   /* compact UI — labels, captions, badges */
+  --leading-relaxed: 1.6;  /* body text, longer prose */
+
+  /* Weights */
+  --weight-normal: 400;    /* body, table cells, captions */
+  --weight-medium: 500;    /* labels, subtitles, nav items, emphasis */
+  --weight-semibold: 600;  /* titles, headings, critical labels */
+}

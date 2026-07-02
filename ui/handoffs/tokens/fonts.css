@@ -1,0 +1,10 @@
+/* ==========================================================================
+   Sekai UI System — Webfonts
+   Inter (Latin UI font) + Noto Sans JP (Japanese product copy).
+   Loaded from Google Fonts. SUBSTITUTION NOTE: the source repo specifies
+   "Inter" with system fallbacks but ships no font binaries; Noto Sans JP is
+   added here because the Dreams product copy is Japanese. Swap for licensed
+   binaries if self-hosting is required.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap");

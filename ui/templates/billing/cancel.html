@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Cancelled - SaaS Template{% endblock %}
+
+{% block content %}
+<div class="billing-result">
+    <h1>Payment Cancelled</h1>
+    <p>Your payment was cancelled. No charges were made.</p>
+    <p>You can try again whenever you're ready.</p>
+    <a href="{% url 'billing:pricing' %}" class="btn btn-primary">Back to Pricing</a>
+</div>
+{% endblock %}

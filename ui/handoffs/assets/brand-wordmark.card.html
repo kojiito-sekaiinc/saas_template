@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" viewport="700x200" name="Wordmark" subtitle="Sekai — semibold, tight tracking, no icon mark" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; padding: 28px; background: var(--color-bg); display:flex; gap:40px; align-items:center; }
+  .lockup { display:flex; flex-direction:column; gap:6px; }
+  .mark { display:inline-flex; align-items:center; gap:10px; }
+  .dot { width:22px; height:22px; border-radius:var(--radius-full); background:var(--color-primary); display:inline-flex; align-items:center; justify-content:center; }
+  .dot span { width:8px; height:8px; border-radius:var(--radius-full); background:#fff; }
+  .word { font:600 28px/1 var(--font-sans); letter-spacing:-0.02em; color:var(--color-text); }
+  .sub { font:400 13px/1.4 var(--font-sans); color:var(--color-text-muted); }
+  .onblue { background:var(--color-primary); padding:18px 22px; border-radius:var(--radius-md); }
+  .onblue .word { color:#fff; }
+  .onblue .dot { background:rgba(255,255,255,0.22); }
+</style>
+</head>
+<body>
+  <div class="lockup">
+    <span class="mark"><span class="dot"><span></span></span><span class="word">Sekai</span></span>
+    <span class="sub">人生で叶えたい夢を、管理して実現する</span>
+  </div>
+  <div class="onblue"><span class="mark"><span class="dot"><span></span></span><span class="word">Sekai</span></span></div>
+</body>
+</html>

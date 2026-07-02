@@ -1,0 +1,270 @@
+{% extends "layouts/app_shell.html" %}
+
+{# ====================================================================== #}
+{# customers/list.html                                                     #}
+{#                                                                         #}
+{# Customer list page.                                                     #}
+{# Demonstrates: search bar, status filter, data table, pagination.       #}
+{#                                                                         #}
+{# Required view context:                                                  #}
+{#                                                                         #}
+{#   nav_items = [                                                         #}
+{#       {'label': 'Dashboard',  'url': '/app/'},                         #}
+{#       {'label': 'Customers',  'url': '/app/customers/', 'active': True}, #}
+{#       {'type': 'separator'},                                            #}
+{#       {'label': 'Settings',   'url': '/app/settings/'},                #}
+{#   ]                                                                    #}
+{#                                                                         #}
+{#   table_headers = ['Name', 'Email', 'Company', 'Status', 'Added']      #}
+{#                                                                         #}
+{#   table_rows = [                                                        #}
+{#       {                                                                 #}
+{#           'cells': ['Alice Kim', 'alice@example.com', 'Acme Corp',     #}
+{#                     'Active', 'Jan 12, 2025'],                         #}
+{#           'actions': [                                                  #}
+{#               {'label': 'View',   'url': '/app/customers/1/'},         #}
+{#               {'label': 'Edit',   'url': '/app/customers/1/edit/'},    #}
+{#           ],                                                            #}
+{#       },                                                                #}
+{#       ...                                                               #}
+{#   ]                                                                    #}
+{#                                                                         #}
+{#   page_obj        — Django Paginator page object                       #}
+{#   search_query    — current search string (from request.GET.q)         #}
+{#   status_filter   — current status filter (from request.GET.status)    #}
+{#   total_count     — total number of matching records                   #}
+{#                                                                         #}
+{#   Pagination URLs (computed in view — do NOT build URLs in template):  #}
+{#   prev_page_url   — URL string for previous page, or None              #}
+{#   next_page_url   — URL string for next page, or None                  #}
+{#   page_range_items — list of dicts for visible page number links:      #}
+{#       [{'number': 3, 'url': '?page=3&q=...', 'is_current': False}, …] #}
+{#                                                                         #}
+{#   View helper (example):                                               #}
+{#     from urllib.parse import urlencode                                  #}
+{#     def _page_url(page_num, q, status):                                #}
+{#         params = {'page': page_num}                                    #}
+{#         if q:      params['q'] = q                                     #}
+{#         if status: params['status'] = status                           #}
+{#         return '?' + urlencode(params)                                  #}
+{#     context['prev_page_url'] = (                                       #}
+{#         _page_url(page_obj.previous_page_number, q, status)            #}
+{#         if page_obj.has_previous else None)                            #}
+{#     context['next_page_url'] = (                                       #}
+{#         _page_url(page_obj.next_page_number, q, status)                #}
+{#         if page_obj.has_next else None)                                #}
+{#     context['page_range_items'] = [                                    #}
+{#         {'number': n,                                                   #}
+{#          'url': _page_url(n, q, status),                               #}
+{#          'is_current': n == page_obj.number}                           #}
+{#         for n in page_obj.paginator.page_range                         #}
+{#         if abs(n - page_obj.number) <= 2                               #}
+{#     ]                                                                   #}
+{# ====================================================================== #}
+
+{% block title %}Customers{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Topbar                                                              #}
+{# ------------------------------------------------------------------ #}
+
+{% block topbar_brand %}
+<span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+  {% block app_name %}MyApp{% endblock %}
+</span>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="flex items-center gap-token-2 pl-token-3 border-l border-sekai-border">
+  <div class="w-7 h-7 rounded-full bg-sekai-bg-subtle border border-sekai-border
+              flex items-center justify-center
+              text-token-xs font-token-medium text-sekai-text-muted"
+       aria-hidden="true">
+    {# カスタム User は email のみを持つため、メールアドレスの頭文字を使う #}
+    {{ request.user.email|first|upper }}
+  </div>
+  <span class="text-token-sm text-sekai-text hidden sm:block">
+    {{ request.user.email }}
+  </span>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar                                                             #}
+{# ------------------------------------------------------------------ #}
+
+{% block sidebar_nav %}
+  {% include "components/sidebar.html" with items=nav_items %}
+{% endblock %}
+
+{% block sidebar_footer %}
+{# px-token-5 (20px) matches effective nav item indent: px-token-3 container + px-token-2 item #}
+<div class="px-token-5">
+  <form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit"
+            class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
+      Sign out
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+
+{% block page_content %}
+
+{# Page header with primary action #}
+{% url 'app:customer_create' as customer_create_url %}
+{% include "components/page_header.html" with
+    title="Customers"
+    description="Manage your customers and their contact details."
+    button_label="Add Customer"
+    button_url=customer_create_url %}
+
+{# ------------------------------------------------------------------ #}
+{# Search and filter bar                                               #}
+{# ------------------------------------------------------------------ #}
+<form method="get" action="" class="mb-token-5">
+  <div class="flex items-end gap-token-3">
+
+    {# Search input — takes remaining width #}
+    <div class="flex-1 min-w-0">
+      {% include "components/input.html" with
+          name="q"
+          label="Search"
+          type="search"
+          placeholder="Search by name or email…"
+          value=search_query
+          autocomplete="off" %}
+    </div>
+
+    {# Status filter #}
+    <div class="w-44 flex-shrink-0">
+      <label for="status"
+             class="text-token-sm font-token-medium text-sekai-text leading-normal block mb-token-2">
+        Status
+      </label>
+      <select id="status" name="status"
+              class="w-full px-token-3 py-token-2
+                     text-token-sm text-sekai-text
+                     bg-sekai-surface border border-sekai-border rounded-token-sm
+                     leading-normal
+                     focus:outline-none focus:ring-2 focus:ring-offset-0
+                     focus:border-sekai-primary focus:ring-sekai-primary-subtle
+                     transition-colors duration-150">
+        <option value="">All statuses</option>
+        <option value="active"
+                {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive"
+                {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+
+    {# Filter submit #}
+    <div class="flex-shrink-0">
+      {% include "components/button.html" with
+          label="Filter"
+          type="submit"
+          variant="secondary" %}
+    </div>
+
+    {# Clear filters — shown only when a filter is active #}
+    {% if search_query or status_filter %}
+    <div class="flex-shrink-0">
+      {% include "components/button.html" with
+          label="Clear"
+          href="?"
+          variant="ghost" %}
+    </div>
+    {% endif %}
+
+  </div>
+</form>
+
+{# ------------------------------------------------------------------ #}
+{# Result count                                                        #}
+{# ------------------------------------------------------------------ #}
+{% if total_count is not None %}
+<p class="mb-token-3 text-token-xs text-sekai-text-muted">
+  {{ total_count }} customer{{ total_count|pluralize }} found
+</p>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Data table                                                          #}
+{# ------------------------------------------------------------------ #}
+{% include "components/table.html" with
+    headers=table_headers
+    rows=table_rows
+    show_actions=True
+    empty_message="No customers found. Try adjusting your search or add a new customer." %}
+
+{# ------------------------------------------------------------------ #}
+{# Pagination                                                          #}
+{# ------------------------------------------------------------------ #}
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<div class="flex items-center justify-between mt-token-5 pt-token-5 border-t border-sekai-border">
+
+  {# Page info #}
+  <p class="text-token-xs text-sekai-text-muted">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </p>
+
+  {# Navigation buttons #}
+  <div class="flex items-center gap-token-2">
+
+    {# prev_page_url は view で構築済み。None のとき disabled ボタンを表示する。 #}
+    {% if prev_page_url %}
+    {% include "components/button.html" with
+        label="← Previous"
+        href=prev_page_url
+        variant="secondary" %}
+    {% else %}
+    {% include "components/button.html" with
+        label="← Previous"
+        variant="secondary"
+        disabled=True %}
+    {% endif %}
+
+    {# page_range_items は view で構築済み。URL 組み立てはテンプレート側では行わない。 #}
+    <div class="hidden sm:flex items-center gap-token-2">
+      {% for item in page_range_items %}
+        {% if item.is_current %}
+        <span class="inline-flex items-center justify-center w-8 h-8
+                     text-token-xs font-token-medium text-sekai-primary
+                     bg-sekai-bg-subtle border border-sekai-border rounded-token-sm">
+          {{ item.number }}
+        </span>
+        {% else %}
+        <a href="{{ item.url }}"
+           class="inline-flex items-center justify-center w-8 h-8
+                  text-token-xs text-sekai-text-muted
+                  border border-sekai-border rounded-token-sm
+                  hover:bg-sekai-surface-hover transition-colors duration-100">
+          {{ item.number }}
+        </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {# next_page_url は view で構築済み。None のとき disabled ボタンを表示する。 #}
+    {% if next_page_url %}
+    {% include "components/button.html" with
+        label="Next →"
+        href=next_page_url
+        variant="secondary" %}
+    {% else %}
+    {% include "components/button.html" with
+        label="Next →"
+        variant="secondary"
+        disabled=True %}
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

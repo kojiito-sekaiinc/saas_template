@@ -1,0 +1,242 @@
+{% extends "layouts/base.html" %}
+
+{# ====================================================================== #}
+{# app_shell.html                                                          #}
+{#                                                                         #}
+{# Layout for authenticated application pages.                             #}
+{#                                                                         #}
+{# Structure:                                                               #}
+{#   Topbar  (fixed, layout.header_height = 56px)                          #}
+{#   Sidebar (fixed at md:+; offcanvas drawer below md:)                  #}
+{#   Main    (scrollable, max layout.content_max_width = 1200px)           #}
+{#                                                                         #}
+{# Responsive behavior:                                                    #}
+{#   Minimum supported viewport: 360px.                                    #}
+{#   Below md: (768px): sidebar is hidden by default. A hamburger button  #}
+{#   in the topbar opens an offcanvas drawer that slides in from the left  #}
+{#   overlaid on content with a semi-transparent backdrop. Tapping the     #}
+{#   backdrop or pressing Esc closes the drawer.                           #}
+{#   At md: and above: sidebar is fixed at 240px (layout.sidebar_width).  #}
+{#   Main content offsets by sidebar width only at md: and above.         #}
+{#                                                                         #}
+{# Blocks available to child templates:                                    #}
+{#   title           — <title> tag (inherited from base.html)              #}
+{#   topbar_brand    — logo / app name in topbar left                      #}
+{#   topbar_center   — optional search or nav in topbar center             #}
+{#                    Hidden on mobile (below sm: / 640px) — the topbar  #}
+{#                    has no horizontal room at narrow widths. Place any  #}
+{#                    mobile-required functionality in topbar_actions or  #}
+{#                    at the top of page_content instead.                 #}
+{#   topbar_actions  — user menu, notifications in topbar right            #}
+{#   sidebar_nav     — primary navigation items                            #}
+{#   sidebar_footer  — bottom sidebar area (user info, settings link)      #}
+{#   page_content    — main scrollable content area                        #}
+{#   scripts         — page-level scripts (inherited from base.html)       #}
+{# ====================================================================== #}
+
+{% block content %}
+
+<div class="min-h-screen bg-sekai-bg">
+
+  {# -------------------------------------------------------------------- #}
+  {# Topbar                                                                #}
+  {# Fixed across the full viewport width.                                 #}
+  {# Height: 56px (layout.header_height)                                   #}
+  {# Border: sekai-border (color.border)                                   #}
+  {# -------------------------------------------------------------------- #}
+  <header class="fixed top-0 left-0 right-0 z-20
+                 h-topbar
+                 bg-sekai-surface border-b border-sekai-border
+                 flex items-center">
+
+    {# Left: brand / logo area                                              #}
+    {# Mobile: full width grows with flex; md+: fixed at sidebar width     #}
+    {# with right border for visual column alignment with fixed sidebar.   #}
+    <div class="flex items-center flex-shrink-0
+                w-full px-token-4
+                md:w-sidebar md:px-token-6 md:border-r md:border-sekai-border
+                h-full gap-token-3">
+
+      {# Hamburger button — only visible below md: #}
+      <button id="drawer-toggle"
+              type="button"
+              class="md:hidden flex items-center justify-center
+                     w-8 h-8 rounded-token-sm
+                     text-sekai-text-muted
+                     hover:bg-sekai-surface-hover transition-colors duration-100
+                     flex-shrink-0"
+              aria-label="Open navigation"
+              aria-expanded="false"
+              aria-controls="sidebar-drawer">
+        {# Hamburger icon — 3 horizontal lines #}
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {% block topbar_brand %}
+      <span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+        Sekai
+      </span>
+      {% endblock %}
+    </div>
+
+    {# Center: optional search, breadcrumb, or secondary navigation        #}
+    {# Contract: always hidden below sm: (640px). The 360px topbar has    #}
+    {# no horizontal room once the hamburger + brand + actions are placed. #}
+    {# Do not place mobile-required features here.                         #}
+    <div class="flex-1 flex items-center px-token-6 hidden sm:flex">
+      {% block topbar_center %}{% endblock %}
+    </div>
+
+    {# Right: user menu, notifications, or other global actions #}
+    <div class="flex items-center gap-token-3 px-token-4 md:px-token-6 ml-auto md:ml-0">
+      {% block topbar_actions %}{% endblock %}
+    </div>
+
+  </header>
+
+  {# -------------------------------------------------------------------- #}
+  {# Backdrop — mobile only, hidden by default                            #}
+  {# Semi-transparent overlay behind the offcanvas drawer.               #}
+  {# Clicking it closes the drawer.                                       #}
+  {# -------------------------------------------------------------------- #}
+  <div id="drawer-backdrop"
+       class="fixed inset-0 z-30 bg-black/40 hidden md:hidden"
+       aria-hidden="true"></div>
+
+  {# -------------------------------------------------------------------- #}
+  {# Below topbar: sidebar + main                                          #}
+  {# pt-topbar offsets content below the fixed header.                    #}
+  {# -------------------------------------------------------------------- #}
+  <div class="flex pt-topbar min-h-screen">
+
+    {# ------------------------------------------------------------------ #}
+    {# Sidebar / Offcanvas Drawer                                          #}
+    {# Mobile (below md:): offcanvas drawer, hidden off-screen to the     #}
+    {# left by default (-translate-x-full). JS toggles this class.        #}
+    {# md: and above: always visible, -translate-x-full has no effect     #}
+    {# because md:translate-x-0 overrides it.                             #}
+    {# Width: 240px (layout.sidebar_width)                                #}
+    {# Background: sekai-bg-subtle (color.bg_subtle)                      #}
+    {# ------------------------------------------------------------------ #}
+    <aside id="sidebar-drawer"
+           class="fixed top-topbar left-0 bottom-0 z-40
+                  w-sidebar
+                  bg-sekai-bg-subtle border-r border-sekai-border
+                  flex flex-col overflow-y-auto
+                  -translate-x-full md:translate-x-0
+                  transition-transform duration-200"
+           aria-label="Main navigation">
+
+      {# Primary navigation items #}
+      <nav class="flex-1 py-token-3">
+        {% block sidebar_nav %}{% endblock %}
+      </nav>
+
+      {# Bottom section: user info, settings link, or secondary actions #}
+      <div class="flex-shrink-0 border-t border-sekai-border py-token-3">
+        {% block sidebar_footer %}{% endblock %}
+      </div>
+
+    </aside>
+
+    {# ------------------------------------------------------------------ #}
+    {# Main content area                                                   #}
+    {# Mobile: no left margin (sidebar is overlaid, not inline).          #}
+    {# md+: offset left by sidebar width so content is never obscured.    #}
+    {# Scrolls independently of sidebar.                                  #}
+    {# Inner container capped at layout.content_max_width (1200px).       #}
+    {# ------------------------------------------------------------------ #}
+    <main class="flex-1 md:ml-sidebar min-h-[calc(100vh-56px)] overflow-y-auto bg-sekai-bg">
+      <div class="max-w-content mx-auto px-token-4 py-token-6 md:px-token-8 md:py-token-8">
+        {% block page_content %}{% endblock %}
+      </div>
+    </main>
+
+  </div>
+
+  {# -------------------------------------------------------------------- #}
+  {# Offcanvas drawer — layout infrastructure script                       #}
+  {# Placed inside {% block content %}, NOT in {% block scripts %},        #}
+  {# so child templates can freely define {% block scripts %} without      #}
+  {# needing {{ block.super }} and without risking breaking this drawer.   #}
+  {# -------------------------------------------------------------------- #}
+  <script>
+    (function () {
+      var toggle   = document.getElementById('drawer-toggle');
+      var backdrop = document.getElementById('drawer-backdrop');
+      var drawer   = document.getElementById('sidebar-drawer');
+      var mainEl   = document.querySelector('main');
+
+      if (!toggle || !backdrop || !drawer) return;
+
+      // Selects the first keyboard-focusable element inside the drawer.
+      var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+      function openDrawer() {
+        drawer.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-label', 'Close navigation');
+        document.body.style.overflow = 'hidden';
+
+        // Prevent Tab from reaching main content while drawer is open.
+        // Note: topbar_actions remain reachable; this is not a full
+        // focus trap but substantially reduces background Tab travel.
+        if (mainEl) mainEl.inert = true;
+
+        // Move focus into the drawer so keyboard/AT users land inside it.
+        var firstFocusable = drawer.querySelector(FOCUSABLE);
+        if (firstFocusable) firstFocusable.focus();
+      }
+
+      // resetDrawerState: clears all side-effects set by openDrawer() without
+      // moving focus. Used when the drawer is dismissed by a non-user-gesture
+      // path (e.g. viewport crossing the md: breakpoint) so focus is not
+      // unexpectedly stolen from wherever the user currently is.
+      function resetDrawerState() {
+        drawer.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open navigation');
+        document.body.style.overflow = '';
+        if (mainEl) mainEl.inert = false;
+      }
+
+      function closeDrawer() {
+        resetDrawerState();
+        // Return focus to the button that opened the drawer.
+        toggle.focus();
+      }
+
+      toggle.addEventListener('click', function () {
+        toggle.getAttribute('aria-expanded') === 'true' ? closeDrawer() : openDrawer();
+      });
+
+      backdrop.addEventListener('click', closeDrawer);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeDrawer();
+      });
+
+      // When the viewport crosses the md: breakpoint (768px) into desktop
+      // mode, reset any drawer state that may have been left open. CSS shows
+      // the sidebar via md:translate-x-0, but body.style.overflow and
+      // main.inert must be cleared in JS — CSS cannot do that.
+      var mq = window.matchMedia('(min-width: 768px)');
+      function onBreakpointChange(e) {
+        if (e.matches) resetDrawerState();
+      }
+      // addEventListener is preferred; addListener is the legacy fallback.
+      if (mq.addEventListener) {
+        mq.addEventListener('change', onBreakpointChange);
+      } else {
+        mq.addListener(onBreakpointChange);
+      }
+    })();
+  </script>
+
+</div>
+
+{% endblock %}

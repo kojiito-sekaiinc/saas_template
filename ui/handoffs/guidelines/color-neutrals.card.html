@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Neutrals — surfaces, borders, text" subtitle="Warm grays do most of the work" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; padding: 20px; background: var(--color-bg); }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .sw { display: flex; flex-direction: column; gap: 6px; }
+  .chip { width: 96px; height: 56px; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+  .n { font: 500 11px/1.4 var(--font-sans); color: var(--color-text); }
+  .v { font: 400 10px/1.4 var(--font-mono); color: var(--color-text-subtle); }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="sw"><div class="chip" style="background:var(--color-bg-subtle)"></div><span class="n">bg-subtle</span><span class="v">#F7F7F5</span></div>
+  <div class="sw"><div class="chip" style="background:var(--color-surface-hover)"></div><span class="n">surface-hover</span><span class="v">#F5F5F4</span></div>
+  <div class="sw"><div class="chip" style="background:var(--color-border)"></div><span class="n">border</span><span class="v">#E7E5E4</span></div>
+  <div class="sw"><div class="chip" style="background:var(--color-border-strong)"></div><span class="n">border-strong</span><span class="v">#D6D3D1</span></div>
+  <div class="sw"><div class="chip" style="background:var(--color-text-muted)"></div><span class="n">text-muted</span><span class="v">#6B7280</span></div>
+  <div class="sw"><div class="chip" style="background:var(--color-text)"></div><span class="n">text</span><span class="v">#191919</span></div>
+</div>
+</body>
+</html>

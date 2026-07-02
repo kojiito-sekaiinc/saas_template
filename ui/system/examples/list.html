@@ -1,0 +1,264 @@
+{% extends "layouts/app_shell.html" %}
+
+{# ====================================================================== #}
+{# examples/list.html                                                      #}
+{#                                                                         #}
+{# Reference implementation of a CRUD list page.                          #}
+{# Demonstrates: search bar, data table, pagination, primary action.      #}
+{#                                                                         #}
+{# ------------------------------------------------------------------ #}
+{# NOTE FOR REAL PROJECTS — Intermediate base template                 #}
+{#                                                                     #}
+{# In a real Django project, the repeated topbar_brand, topbar_actions, #}
+{# sidebar_nav, and sidebar_footer blocks should be defined ONCE in a  #}
+{# project-level intermediate template, for example:                   #}
+{#                                                                     #}
+{#   myapp/templates/myapp/base_app.html                               #}
+{#     {% extends "layouts/app_shell.html" %}                          #}
+{#     {% block topbar_brand %}...{% endblock %}                       #}
+{#     {% block topbar_actions %}...{% endblock %}                     #}
+{#     {% block sidebar_nav %}...{% endblock %}                        #}
+{#     {% block sidebar_footer %}...{% endblock %}                     #}
+{#                                                                     #}
+{# All page templates then extend myapp/base_app.html and only         #}
+{# override {% block page_content %}. The full block definitions below  #}
+{# are shown here for reference clarity only.                          #}
+{# ------------------------------------------------------------------ #}
+{#                                                                         #}
+{# Required view context:                                                  #}
+{#                                                                         #}
+{#   nav_items = [                                                          #}
+{#       {'label': 'Dashboard', 'url': '/dashboard/'},                     #}
+{#       {'label': 'Users',     'url': '/users/', 'active': True},         #}
+{#       {'label': 'Projects',  'url': '/projects/'},                      #}
+{#       {'label': 'Analytics', 'url': '/analytics/'},                     #}
+{#       {'type': 'separator'},                                             #}
+{#       {'label': 'Settings',  'url': '/settings/'},                      #}
+{#   ]                                                                     #}
+{#                                                                         #}
+{#   current_user = request.user                                           #}
+{#   logout_url    — URL for the Sign out link; use reverse('logout') or  #}
+{#                   any project-specific logout URL in the view:          #}
+{#                     context['logout_url'] = reverse('logout')          #}
+{#                                                                         #}
+{#   table_headers = ['Name', 'Email', 'Role', 'Status', 'Joined']        #}
+{#                                                                         #}
+{#   table_rows = [                                                         #}
+{#       {                                                                  #}
+{#           'cells': ['Alice Kim', 'alice@example.com', 'Admin', 'Active', 'Jan 12, 2025'], #}
+{#           'actions': [                                                   #}
+{#               {'label': 'Edit',   'url': '/users/1/edit/'},              #}
+{#               {'label': 'Delete', 'url': '/users/1/delete/', 'danger': True}, #}
+{#           ],                                                             #}
+{#       },                                                                 #}
+{#       ...                                                                #}
+{#   ]                                                                     #}
+{#                                                                         #}
+{#   page_obj      — Django Paginator page object                          #}
+{#   search_query  — current search string (from request.GET.q)            #}
+{#   total_count   — total number of records                               #}
+{#   filter_qs     — URL-encoded active filters excluding "page", built    #}
+{#                   in the view so pagination links are always safe:      #}
+{#                     params = request.GET.copy()                         #}
+{#                     params.pop('page', None)                            #}
+{#                     context['filter_qs'] = params.urlencode()           #}
+{#                                                                         #}
+{#   role_choices = [                                                      #}
+{#       {'value': '', 'label': 'All roles'},                             #}
+{#       {'value': 'admin', 'label': 'Admin'},                            #}
+{#       {'value': 'member', 'label': 'Member'},                          #}
+{#       {'value': 'viewer', 'label': 'Viewer'},                          #}
+{#   ]                                                                     #}
+{#   status_choices = [                                                    #}
+{#       {'value': '', 'label': 'All statuses'},                          #}
+{#       {'value': 'active', 'label': 'Active'},                          #}
+{#       {'value': 'inactive', 'label': 'Inactive'},                      #}
+{#   ]                                                                     #}
+{# ====================================================================== #}
+
+{% block title %}Users — MyApp{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Topbar                                                              #}
+{# ------------------------------------------------------------------ #}
+
+{% block topbar_brand %}
+<span class="text-token-sm font-token-semibold text-sekai-text tracking-tight">
+  MyApp
+</span>
+{% endblock %}
+
+{% block topbar_actions %}
+<div class="flex items-center gap-token-2 pl-token-3 border-l border-sekai-border">
+  <div class="w-7 h-7 rounded-full bg-sekai-bg-subtle border border-sekai-border
+              flex items-center justify-center
+              text-token-xs font-token-medium text-sekai-text-muted"
+       aria-hidden="true">
+    {{ current_user.first_name|first|upper }}{{ current_user.last_name|first|upper }}
+  </div>
+  <span class="text-token-sm text-sekai-text hidden sm:block">
+    {{ current_user.get_full_name|default:current_user.username }}
+  </span>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Sidebar                                                             #}
+{# ------------------------------------------------------------------ #}
+
+{% block sidebar_nav %}
+  {% include "components/sidebar.html" with items=nav_items %}
+{% endblock %}
+
+{% block sidebar_footer %}
+<div class="px-token-5">
+  <a href="{{ logout_url }}"
+     class="text-token-xs text-sekai-text-muted hover:text-sekai-text transition-colors duration-100">
+    Sign out
+  </a>
+</div>
+{% endblock %}
+
+{# ------------------------------------------------------------------ #}
+{# Main content                                                        #}
+{# ------------------------------------------------------------------ #}
+
+{% block page_content %}
+
+{# Page header with primary action #}
+{% include "components/page_header.html" with
+    title="Users"
+    description="Manage your team members, roles, and access permissions."
+    button_label="Add User"
+    button_url="/users/new/" %}
+
+{# ------------------------------------------------------------------ #}
+{# Search and filter bar                                               #}
+{# ------------------------------------------------------------------ #}
+<form method="get" action="" class="mb-token-5">
+  <div class="flex flex-wrap items-end gap-token-3">
+
+    {# Search input — full width on all breakpoints; acts as the flex baseline #}
+    <div class="flex-1 min-w-0">
+      {% include "components/input.html" with
+          name="q"
+          label="Search"
+          type="search"
+          placeholder="Search by name or email…"
+          value=search_query
+          autocomplete="off" %}
+    </div>
+
+    {# Role filter — full width on small screens, fixed 160px on sm+ #}
+    <div class="w-full sm:w-40 flex-shrink-0">
+      {% include "components/select.html" with name="role" label="Role" choices=role_choices selected_value=request.GET.role %}
+    </div>
+
+    {# Status filter — full width on small screens, fixed 160px on sm+ #}
+    <div class="w-full sm:w-40 flex-shrink-0">
+      {% include "components/select.html" with name="status" label="Status" choices=status_choices selected_value=request.GET.status %}
+    </div>
+
+    {# Search submit #}
+    <div class="flex-shrink-0">
+      {% include "components/button.html" with
+          label="Filter"
+          type="submit"
+          variant="secondary" %}
+    </div>
+
+    {# Clear filters link — shown only when filters are active #}
+    {% if search_query or request.GET.role or request.GET.status %}
+    <div class="flex-shrink-0">
+      {% include "components/button.html" with
+          label="Clear"
+          href="?"
+          variant="ghost" %}
+    </div>
+    {% endif %}
+
+  </div>
+</form>
+
+{# ------------------------------------------------------------------ #}
+{# Result count                                                        #}
+{# ------------------------------------------------------------------ #}
+{% if total_count is not None %}
+<p class="mb-token-3 text-token-xs text-sekai-text-muted">
+  {{ total_count }} user{{ total_count|pluralize }} found
+</p>
+{% endif %}
+
+{# ------------------------------------------------------------------ #}
+{# Data table                                                          #}
+{# ------------------------------------------------------------------ #}
+{% include "components/table.html" with
+    headers=table_headers
+    rows=table_rows
+    empty_message="No users found. Try adjusting your search or filters."
+    show_actions=True %}
+
+{# ------------------------------------------------------------------ #}
+{# Pagination                                                          #}
+{# ------------------------------------------------------------------ #}
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<div class="flex items-center justify-between mt-token-5 pt-token-5 border-t border-sekai-border">
+
+  {# Page info #}
+  <p class="text-token-xs text-sekai-text-muted">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </p>
+
+  {# Navigation buttons #}
+  <div class="flex items-center gap-token-2">
+
+    {% if page_obj.has_previous %}
+    {% include "components/button.html" with
+        label="← Previous"
+        href="?page={{ page_obj.previous_page_number }}{% if filter_qs %}&{{ filter_qs }}{% endif %}"
+        variant="secondary" %}
+    {% else %}
+    {% include "components/button.html" with
+        label="← Previous"
+        variant="secondary"
+        disabled=True %}
+    {% endif %}
+
+    {# Visible page numbers — show up to 5 around current page #}
+    <div class="hidden sm:flex items-center gap-token-2">
+      {% for page_num in page_obj.paginator.page_range %}
+        {% if page_num == page_obj.number %}
+        <span class="inline-flex items-center justify-center w-8 h-8
+                     text-token-xs font-token-medium text-sekai-primary
+                     bg-sekai-bg-subtle border border-sekai-border rounded-token-sm">
+          {{ page_num }}
+        </span>
+        {% elif page_num >= page_obj.number|add:"-2" and page_num <= page_obj.number|add:"2" %}
+        <a href="?page={{ page_num }}{% if filter_qs %}&{{ filter_qs }}{% endif %}"
+           class="inline-flex items-center justify-center w-8 h-8
+                  text-token-xs text-sekai-text-muted
+                  border border-sekai-border rounded-token-sm
+                  hover:bg-sekai-surface-hover transition-colors duration-100">
+          {{ page_num }}
+        </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_next %}
+    {% include "components/button.html" with
+        label="Next →"
+        href="?page={{ page_obj.next_page_number }}{% if filter_qs %}&{{ filter_qs }}{% endif %}"
+        variant="secondary" %}
+    {% else %}
+    {% include "components/button.html" with
+        label="Next →"
+        variant="secondary"
+        disabled=True %}
+    {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

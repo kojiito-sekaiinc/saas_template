@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Sekai UI System — Color tokens
+   Source of truth: sekai-ui-system/design/tokens.json
+   Notion-style minimal: white base, subtle warm-gray borders, single blue accent.
+   ========================================================================== */
+
+:root {
+  /* --- Base palette (raw values) --- */
+  --sekai-white: #FFFFFF;
+  --sekai-stone-50: #F7F7F5;   /* warm subtle bg */
+  --sekai-stone-100: #F5F5F4;  /* surface hover */
+  --sekai-stone-200: #E7E5E4;  /* border */
+  --sekai-stone-300: #D6D3D1;  /* border strong */
+  --sekai-ink: #191919;        /* primary text (near-black) */
+  --sekai-gray-500: #6B7280;   /* muted text */
+  --sekai-gray-400: #9CA3AF;   /* subtle text */
+
+  --sekai-blue-600: #2F6FEB;   /* primary accent */
+  --sekai-blue-700: #1D4ED8;   /* primary hover */
+  --sekai-blue-50: #EEF4FF;    /* primary subtle / focus ring */
+
+  --sekai-green-700: #15803D;  /* success */
+  --sekai-green-50: #F0FDF4;   /* success subtle */
+  --sekai-amber-700: #B45309;  /* warning */
+  --sekai-amber-50: #FFFBEB;   /* warning subtle */
+  --sekai-red-700: #B91C1C;    /* danger */
+  --sekai-red-50: #FEF2F2;     /* danger subtle */
+
+  /* --- Semantic aliases --- */
+  /* Surfaces */
+  --color-bg: var(--sekai-white);          /* page/root canvas — always white */
+  --color-bg-subtle: var(--sekai-stone-50);/* sidebars, secondary areas */
+  --color-surface: var(--sekai-white);     /* cards, inputs, modals */
+  --color-surface-hover: var(--sekai-stone-100);
+
+  /* Borders */
+  --color-border: var(--sekai-stone-200);
+  --color-border-strong: var(--sekai-stone-300);
+
+  /* Text */
+  --color-text: var(--sekai-ink);
+  --color-text-muted: var(--sekai-gray-500);
+  --color-text-subtle: var(--sekai-gray-400);
+
+  /* Primary accent (use sparingly) */
+  --color-primary: var(--sekai-blue-600);
+  --color-primary-hover: var(--sekai-blue-700);
+  --color-primary-subtle: var(--sekai-blue-50);
+
+  /* Status */
+  --color-success: var(--sekai-green-700);
+  --color-success-subtle: var(--sekai-green-50);
+  --color-warning: var(--sekai-amber-700);
+  --color-warning-subtle: var(--sekai-amber-50);
+  --color-danger: var(--sekai-red-700);
+  --color-danger-subtle: var(--sekai-red-50);
+}

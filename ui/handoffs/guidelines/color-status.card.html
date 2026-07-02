@@ -1,0 +1,24 @@
+<!-- @dsCard group="Colors" viewport="700x160" name="Status colors" subtitle="Success / warning / danger — only to communicate state" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; padding: 20px; background: var(--color-bg); }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .sw { display: flex; flex-direction: column; gap: 6px; }
+  .pair { display: flex; gap: 4px; }
+  .chip { width: 52px; height: 56px; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+  .n { font: 500 12px/1.4 var(--font-sans); color: var(--color-text); }
+  .v { font: 400 10px/1.4 var(--font-mono); color: var(--color-text-subtle); }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="sw"><div class="pair"><div class="chip" style="background:var(--color-success)"></div><div class="chip" style="background:var(--color-success-subtle)"></div></div><span class="n">success</span><span class="v">#15803D / #F0FDF4</span></div>
+  <div class="sw"><div class="pair"><div class="chip" style="background:var(--color-warning)"></div><div class="chip" style="background:var(--color-warning-subtle)"></div></div><span class="n">warning</span><span class="v">#B45309 / #FFFBEB</span></div>
+  <div class="sw"><div class="pair"><div class="chip" style="background:var(--color-danger)"></div><div class="chip" style="background:var(--color-danger-subtle)"></div></div><span class="n">danger</span><span class="v">#B91C1C / #FEF2F2</span></div>
+</div>
+</body>
+</html>

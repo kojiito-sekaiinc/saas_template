@@ -1,0 +1,108 @@
+{# ====================================================================== #}
+{# components/sidebar.html                                                 #}
+{#                                                                         #}
+{# Vertical navigation sidebar. Designed to be included inside the        #}
+{# {% block sidebar_nav %} of layouts/app_shell.html.                     #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   In your Django view:                                                   #}
+{#                                                                         #}
+{#     nav_items = [                                                        #}
+{#         {'label': 'Dashboard', 'url': '/dashboard/', 'active': True},   #}
+{#         {'label': 'Users',     'url': '/users/'},                       #}
+{#         {'label': 'Analytics', 'url': '/analytics/'},                   #}
+{#         {'type': 'separator'},   {# visual divider between groups #}    #}
+{#         {'label': 'Settings',  'url': '/settings/'},                    #}
+{#     ]                                                                    #}
+{#                                                                         #}
+{#   In app_shell child template:                                           #}
+{#     {% block sidebar_nav %}                                              #}
+{#       {% include "components/sidebar.html" with items=nav_items %}      #}
+{#     {% endblock %}                                                       #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   items     — list of nav item dicts (required):                        #}
+{#                 label    — visible text (required unless type=separator) #}
+{#                 url      — href for the nav link (required)             #}
+{#                 active   — boolean; highlights item as current page     #}
+{#                 type     — "separator" renders a divider line           #}
+{#   app_name  — shown as a section label above all items (optional)      #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.text          — default nav item text                           #}
+{#   color.text_muted    — inactive nav item text                          #}
+{#   color.text_subtle   — section labels                                  #}
+{#   color.primary       — active item text                                #}
+{#   color.surface_hover — item hover background                           #}
+{#   color.bg_subtle     — active item background                          #}
+{#   color.border        — separator line                                  #}
+{#   font.size_sm        — nav item text                                   #}
+{#   font.size_xs        — section labels                                  #}
+{#   font.weight_medium  — active item weight                              #}
+{#   font.weight_normal  — inactive item weight                            #}
+{#   spacing.2 (px), spacing.3 (section gap)                              #}
+{#   py-1.5 (6px) and gap-0.5 (2px) — intentional micro-spacing for nav  #}
+{#   item density; not a token violation (see design-principles.md §4)    #}
+{#   radius.sm           — item corner radius                              #}
+{# ====================================================================== #}
+
+{# gap-0.5 (2px) — intentional micro-spacing between nav items for tight density #}
+<div class="flex flex-col gap-0.5 px-token-3">
+
+  {# Optional section label above all items #}
+  {% if app_name %}
+  <p class="px-token-2 mb-token-2 text-token-xs font-token-medium text-sekai-text-subtle uppercase tracking-wide">
+    {{ app_name }}
+  </p>
+  {% endif %}
+
+  {% for item in items %}
+
+    {# ---- Separator / section divider ---- #}
+    {% if item.type == "separator" %}
+    <div class="my-token-2 border-t border-sekai-border" role="separator"></div>
+
+    {# ---- Section label (group heading) ---- #}
+    {% elif item.type == "section" %}
+    <p class="px-token-2 mt-token-3 mb-token-2 text-token-xs font-token-medium text-sekai-text-subtle uppercase tracking-wide">
+      {{ item.label }}
+    </p>
+
+    {# ---- Standard navigation item ---- #}
+    {# py-1.5 (6px) — intentional micro-spacing for compact nav item height #}
+    {% else %}
+    <a href="{{ item.url }}"
+       class="flex items-center gap-token-2
+              px-token-2 py-1.5
+              text-token-sm rounded-token-sm
+              transition-colors duration-100
+              {% if item.active %}
+                bg-sekai-bg-subtle text-sekai-primary font-token-medium
+              {% else %}
+                text-sekai-text-muted font-token-normal
+                hover:bg-sekai-surface-hover hover:text-sekai-text
+              {% endif %}"
+       {% if item.active %}aria-current="page"{% endif %}>
+
+      {# Optional icon — pass icon HTML as item.icon (rendered with |safe) #}
+      {% if item.icon %}
+      <span class="flex-shrink-0 w-4 h-4 text-current" aria-hidden="true">
+        {{ item.icon|safe }}
+      </span>
+      {% endif %}
+
+      <span class="truncate">{{ item.label }}</span>
+
+      {# Optional badge / count — pass as item.badge #}
+      {% if item.badge %}
+      <span class="ml-auto text-token-xs text-sekai-text-muted tabular-nums">
+        {{ item.badge }}
+      </span>
+      {% endif %}
+
+    </a>
+    {% endif %}
+
+  {% endfor %}
+
+</div>

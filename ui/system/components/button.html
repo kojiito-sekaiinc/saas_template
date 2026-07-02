@@ -1,0 +1,89 @@
+{# ====================================================================== #}
+{# components/button.html                                                 #}
+{#                                                                         #}
+{# Reusable button component. Renders as <button> or <a> depending on     #}
+{# whether `href` is supplied.                                             #}
+{#                                                                         #}
+{# Usage:                                                                  #}
+{#   {% include "components/button.html" with label="Save" variant="primary" type="submit" %} #}
+{#   {% include "components/button.html" with label="Cancel" href="/dashboard/" variant="ghost" %} #}
+{#                                                                         #}
+{# Variables:                                                              #}
+{#   label         — visible button text (required)                        #}
+{#   variant       — "primary" | "secondary" | "ghost" | "danger"          #}
+{#                   default: "primary"                                    #}
+{#   type          — "button" | "submit" | "reset"   default: "button"    #}
+{#   href          — URL; renders <a> instead of <button> when present     #}
+{#   disabled      — boolean; disables interaction                         #}
+{#   name          — form field name (optional)                            #}
+{#   value         — form field value (optional)                           #}
+{#   extra_classes — additional Tailwind classes (optional)                #}
+{#                                                                         #}
+{# Design tokens used:                                                     #}
+{#   color.primary / primary_hover — primary variant                       #}
+{#   color.surface / surface_hover — secondary / ghost hover               #}
+{#   color.border                  — secondary / danger default border     #}
+{#   color.danger                  — danger variant text                   #}
+{#   font.size_sm, font.weight_medium                                      #}
+{#   spacing.4 (px), spacing.2 (py)                                        #}
+{#   radius.md                                                             #}
+{# ====================================================================== #}
+
+{# Resolve defaults #}
+{% with v=variant|default:"primary" t=type|default:"button" %}
+
+{#
+  Tailwind safelist — keeps all variant classes available in the stylesheet
+  even when not all variants appear on the same rendered page.
+
+  bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary
+  bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover focus:ring-sekai-border-strong
+  bg-transparent text-sekai-text-muted border-transparent hover:bg-sekai-surface-hover hover:text-sekai-text focus:ring-sekai-border
+  bg-sekai-surface text-sekai-danger border-sekai-border hover:bg-sekai-danger-subtle hover:border-sekai-danger focus:ring-sekai-danger-subtle
+#}
+
+{# Shared base classes — all variants #}
+{% with base="inline-flex items-center justify-center gap-token-2 px-token-4 py-token-2 text-token-sm font-token-medium leading-normal rounded-token-md border transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 whitespace-nowrap" %}
+
+{% if href %}
+
+{# ---- Anchor variant ---- #}
+{# disabled=True: href is omitted so navigation is physically prevented,  #}
+{# aria-disabled="true" notifies assistive technologies, and opacity/     #}
+{# cursor classes signal the disabled state visually.                     #}
+<a {% if not disabled %}href="{{ href }}"{% endif %}
+   {% if disabled %}aria-disabled="true"{% endif %}
+   class="{{ base }}
+     {% if disabled %}opacity-50 cursor-not-allowed
+     {% elif v == 'primary' %}bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary
+     {% elif v == 'secondary' %}bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover focus:ring-sekai-border-strong
+     {% elif v == 'ghost' %}bg-transparent text-sekai-text-muted border-transparent hover:bg-sekai-surface-hover hover:text-sekai-text focus:ring-sekai-border
+     {% elif v == 'danger' %}bg-sekai-surface text-sekai-danger border-sekai-border hover:bg-sekai-danger-subtle hover:border-sekai-danger focus:ring-sekai-danger-subtle
+     {% else %}bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover
+     {% endif %}
+     {{ extra_classes }}">
+  {{ label }}
+</a>
+
+{% else %}
+
+{# ---- Button variant ---- #}
+<button type="{{ t }}"
+        {% if name %}name="{{ name }}"{% endif %}
+        {% if value is not None %}value="{{ value }}"{% endif %}
+        {% if disabled %}disabled{% endif %}
+        class="{{ base }} disabled:opacity-50 disabled:cursor-not-allowed
+          {% if v == 'primary' %}bg-sekai-primary text-white border-transparent hover:bg-sekai-primary-hover focus:ring-sekai-primary
+          {% elif v == 'secondary' %}bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover focus:ring-sekai-border-strong
+          {% elif v == 'ghost' %}bg-transparent text-sekai-text-muted border-transparent hover:bg-sekai-surface-hover hover:text-sekai-text focus:ring-sekai-border
+          {% elif v == 'danger' %}bg-sekai-surface text-sekai-danger border-sekai-border hover:bg-sekai-danger-subtle hover:border-sekai-danger focus:ring-sekai-danger-subtle
+          {% else %}bg-sekai-surface text-sekai-text border-sekai-border hover:bg-sekai-surface-hover
+          {% endif %}
+          {{ extra_classes }}">
+  {{ label }}
+</button>
+
+{% endif %}
+
+{% endwith %}
+{% endwith %}

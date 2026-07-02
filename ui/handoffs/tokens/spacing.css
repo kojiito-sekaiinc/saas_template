@@ -1,0 +1,36 @@
+/* ==========================================================================
+   Sekai UI System — Spacing, radius, shadow & layout tokens
+   Spacing does the work of separating content — reducing need for borders/shadows.
+   ========================================================================== */
+
+:root {
+  /* Spacing scale (8px base, named to match tokens.json keys) */
+  --space-2: 8px;    /* tight inner padding, icon gaps */
+  --space-3: 12px;   /* small component padding */
+  --space-4: 16px;   /* standard component padding */
+  --space-5: 20px;   /* medium gaps between elements */
+  --space-6: 24px;   /* section padding, card padding */
+  --space-8: 32px;   /* between sections */
+  --space-10: 40px;  /* large layout gaps */
+  --space-12: 48px;  /* major section separators */
+
+  /* Radius */
+  --radius-sm: 6px;  /* inputs, tags, badges, table cells */
+  --radius-md: 8px;  /* buttons, cards, dropdowns, tooltips */
+  --radius-lg: 10px; /* modals, large panels, sheets */
+  --radius-full: 9999px;
+
+  /* Shadow — minimal by design */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04); /* floating cards, modals only */
+
+  /* Layout constants */
+  --layout-sidebar-width: 240px;
+  --layout-header-height: 56px;
+  --layout-content-max-width: 1200px;
+
+  /* Motion — fast, subtle, never decorative */
+  --duration-fast: 100ms;  /* @kind other */
+  --duration-base: 150ms;  /* @kind other */
+  --ease: ease;            /* @kind other */
+}

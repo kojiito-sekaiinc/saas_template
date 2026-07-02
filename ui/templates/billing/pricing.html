@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing - SaaS Template{% endblock %}
+
+{% block content %}
+<div class="pricing">
+    <h1>Pricing</h1>
+
+    <div class="pricing-card">
+        <h2>Monthly Plan</h2>
+        <div class="pricing-price">
+            <span class="price-amount">¥{{ price }}</span>
+            <span class="price-period">/ month</span>
+        </div>
+        <ul class="pricing-features">
+            <li>Access to all features</li>
+            <li>Cancel anytime</li>
+        </ul>
+
+        {% if user.is_authenticated %}
+        <form action="{% url 'billing:checkout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Subscribe Now</button>
+        </form>
+        {% else %}
+        <a href="{% url 'accounts:login' %}?next={% url 'billing:pricing' %}" class="btn btn-primary">Log in to Subscribe</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

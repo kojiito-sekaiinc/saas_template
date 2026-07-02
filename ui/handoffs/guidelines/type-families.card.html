@@ -1,0 +1,31 @@
+<!-- @dsCard group="Type" viewport="700x180" name="Font families" subtitle="Inter for Latin · Noto Sans JP for Japanese" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; padding: 24px; background: var(--color-bg); }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+  .label { font: 400 11px/1.4 var(--font-mono); color: var(--color-text-subtle); margin-bottom: 4px; }
+  .latin { font: 400 26px/1.3 var(--font-sans); color: var(--color-text); letter-spacing: -0.01em; }
+  .jp { font: 500 24px/1.4 var(--font-sans); color: var(--color-text); }
+  .weights { font: 400 14px/1.4 var(--font-sans); color: var(--color-text-muted); margin-top: 4px; }
+  b { font-weight: 600; color: var(--color-text); }
+  .m { font-weight: 500; color: var(--color-text); }
+</style>
+</head>
+<body>
+<div class="stack">
+  <div>
+    <div class="label">Inter — Latin / numerals</div>
+    <div class="latin">Dreams, one at a time. 0123456789</div>
+  </div>
+  <div>
+    <div class="label">Noto Sans JP — 日本語</div>
+    <div class="jp">人生で実現したい夢を、管理して、叶える。</div>
+  </div>
+  <div class="weights">Weights: <span>normal 400</span> · <span class="m">medium 500</span> · <b>semibold 600</b></div>
+</div>
+</body>
+</html>
