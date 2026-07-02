@@ -282,3 +282,56 @@ Before completing any task, you MUST verify:
 - This repository is a TEMPLATE. Modify only apps/app for new services.
 - Do not change billing or paywall logic unless absolutely necessary.
 - If unsure, prefer deletion over addition.
+
+
+## Product Development Roles
+
+This SaaS template uses five product development roles:
+
+1. Product Strategist
+
+   - Decide what should be built.
+
+   - Define MVP scope.
+
+   - Clarify what not to build.
+
+2. Prototyper
+
+   - Build the fastest working version.
+
+3. Builder
+
+   - Convert prototype into production-quality implementation.
+
+4. Sweeper
+
+   - Simplify UI and code.
+
+   - Remove unnecessary features.
+
+   - Reduce complexity.
+
+5. Grower
+
+   - Improve activation, retention, pricing, conversion, and PMF.
+
+## Standard Workflow
+
+Before implementing a new feature:
+
+1. Use product-strategist.
+
+2. Update docs/mvp-scope.md if needed.
+
+3. Use prototyper for the smallest working version.
+
+4. Use builder to harden the implementation.
+
+5. Use sweeper before merging.
+
+6. Use grower before deciding the next feature.
+
+Do not build features only because they are easy.
+
+Always identify what should not be built.
