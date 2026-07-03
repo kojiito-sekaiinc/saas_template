@@ -11,11 +11,17 @@
 - [ ] `.env` 作成：`cp .env.example .env`
 - [ ] `SECRET_KEY` を新規生成して設定
 - [ ] `SITE_URL` をローカルに（`http://localhost:8000`）
-- [ ] 依存関係を入れる：`pip install -r requirements.txt`
+- [ ] 依存関係を入れる：`pip install -r requirements-dev.txt`
+      （本番デプロイは requirements.txt のみが使われる）
 - [ ] migrate：`python manage.py migrate`
 - [ ] 管理者作成：`python manage.py createsuperuser`
 - [ ] quick_check：`./scripts/checks/quick_check.sh`
 - [ ] 起動：`python manage.py runserver`
+- [ ] ブランド名設定：`.env` に `SITE_NAME=<サービス名>` を追加
+      （navbar / タイトル / フッターに反映される。未設定時は "SaaS Template"）
+- [ ] デモデータ削除：`apps/app/views.py` の `_FAKE_CUSTOMERS` と
+      customer_list / customer_create ビューはデモ実装。
+      新サービスの機能実装時に削除するか、実モデルの queryset に置き換える
 
 ---
 

@@ -12,7 +12,12 @@ def dashboard(request):
 
 
 # ---------------------------------------------------------------------------
-# 仮データ — Customer モデル実装後は queryset に置き換える
+# TODO(template): デモデータ — 新サービス作成時に削除・置換すること
+#
+# _FAKE_CUSTOMERS と customer_list / customer_create は UI デモ用の仮実装。
+# 実サービスでは Customer モデルを実装して queryset に置き換えるか、
+# 顧客一覧が不要なら該当ビューと apps/app/urls.py のルートを削除する。
+# 手順は docs/TEMPLATE_CHECKLIST.md「1) 新規プロジェクト作成」を参照。
 # ---------------------------------------------------------------------------
 _FAKE_CUSTOMERS = [
     {"name": "Alice Kim",      "email": "alice@example.com",   "company": "Acme Corp",    "status": "Active",   "added": "Jan 12, 2025"},

@@ -186,6 +186,21 @@ CVC: 任意
 ❌ Test / Live の混在
 	•	Test mode のキーと Live mode の Price ID を混ぜない
 
+❌ 複数の SaaS で同一 Stripe アカウントを共有しない
+	•	このテンプレートは複数サービスへの複製を前提としている。
+		複製した各サービスは 原則としてサービスごとに別の Stripe アカウント
+		（または少なくとも別の Webhook Endpoint + 別の Price）を使うこと。
+	•	理由：Webhook イベントはアカウント単位で配信される。
+		同一アカウントを共有すると、サービスAの解約
+		（customer.subscription.deleted 等）がサービスBの
+		Webhook にも届き、customer_id 経由で B 側のユーザーに
+		紐づいて課金状態を誤って上書きするリスクがある。
+	•	特に customer.subscription.deleted は Price 検証を通らない経路が
+		あるため、アカウント共有時の混在イベントは事故に直結する。
+	•	やむを得ず共有する場合は、Webhook Endpoint の対象イベントを絞り、
+		自サービスの Price / Subscription ID 以外を無視することを確認してから
+		運用すること。
+
 ⸻
 
 9. 本番移行チェックリスト（簡易）

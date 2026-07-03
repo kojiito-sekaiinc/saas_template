@@ -43,6 +43,11 @@ ALLOWED_HOSTS = [
 # Site URL for absolute URLs (used in Stripe Checkout, emails, etc.)
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
 
+# Site name shown in templates (navbar, <title>, footer).
+# 新サービス作成時は env var SITE_NAME を設定するだけでブランド名を差し替えられる。
+# テンプレートからは context processor 経由で {{ site_name }} として参照する。
+SITE_NAME = os.environ.get("SITE_NAME", "SaaS Template")
+
 # CSRF trusted origins (comma-separated, e.g. "https://example.com,https://www.example.com")
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -111,6 +116,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.common.context_processors.site",
             ],
         },
     },
