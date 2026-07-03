@@ -59,3 +59,9 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# ---------------------------------------------------------------------------
+# Email: テスト時はメモリ内 backend を使用する
+# 送信されたメールは django.core.mail.outbox で検証できる。
+# ---------------------------------------------------------------------------
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

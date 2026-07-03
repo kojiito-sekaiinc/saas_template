@@ -109,6 +109,32 @@ Python 3.14 は Django 互換性の問題により非対応。
 | `STRIPE_PRICE_ID` | サブスクリプション用 Stripe Price ID | Yes（課金機能） |
 | `TRUSTED_PROXY_COUNT` | 信頼するリバースプロキシ数（Railway 本番: `1`）| No（デフォルト: `0`） |
 | `DJANGO_STATICFILES_MANIFEST` | WhiteNoise の manifest モードを有効化。本番で cache-busting を使う場合は `1`。`collectstatic` 実行が前提 | No（デフォルト: `0`） |
+| `SITE_NAME` | ブランド名（navbar / タイトル / メール本文に表示）| No（デフォルト: `SaaS Template`） |
+| `EMAIL_BACKEND` | メール送信 backend。本番は SMTP を指定 | No（デフォルト: console 出力） |
+| `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` / `EMAIL_USE_TLS` | SMTP 接続情報 | Yes（本番でメール送信する場合） |
+| `DEFAULT_FROM_EMAIL` | 送信元メールアドレス | Yes（本番でメール送信する場合） |
+
+---
+
+## Email（パスワードリセット）
+
+パスワードリセット（`/accounts/password-reset/`）はメール送信を使います。
+
+**開発**: 設定不要。デフォルトの console backend により、
+リセットメールの本文（リンク含む）が runserver のターミナルに出力されます。
+
+**本番**: SMTP プロバイダ（SendGrid / Amazon SES / Resend 等）の情報を
+env var で設定します。
+
+```bash
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=apikey
+EMAIL_HOST_PASSWORD=your-smtp-password
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+```
 
 ---
 

@@ -237,6 +237,26 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
+# ---------------------------------------------------------------------------
+# Email（パスワードリセット等で使用）
+#
+# 開発: デフォルトの console backend でメール本文がターミナルに出力される。
+# 本番: EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend と
+#       SMTP 認証情報を env var で設定する（README「メール設定」参照）。
+# ---------------------------------------------------------------------------
+# `or` フォールバック: .env.example の空値（EMAIL_BACKEND= 等）が
+# デフォルトを空文字で上書きしないようにする（DATABASE_URL= と同じ扱い）
+EMAIL_BACKEND = (
+    os.environ.get("EMAIL_BACKEND")
+    or "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT") or "587")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = (os.environ.get("EMAIL_USE_TLS") or "True").lower() in ("true", "1", "yes")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL") or "noreply@example.com"
+
 # CSRF_TRUSTED_ORIGINS fallback: HTTPS の SITE_URL を自動追加
 if not CSRF_TRUSTED_ORIGINS and SITE_URL.startswith("https://"):
     CSRF_TRUSTED_ORIGINS = [SITE_URL.rstrip("/")]

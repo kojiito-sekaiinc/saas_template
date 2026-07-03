@@ -255,3 +255,192 @@ def test_open_redirect_blocked_on_signup(client):
     )
     assert resp.status_code == 302
     assert "evil.com" not in resp.url
+
+
+# ---------------------------------------------------------------------------
+# パスワードリセット（Django 標準ビュー）
+# ---------------------------------------------------------------------------
+
+PASSWORD_RESET_URL = "/accounts/password-reset/"
+
+
+@pytest.mark.django_db
+def test_login_page_has_password_reset_link(client):
+    """ログイン画面に「パスワードを忘れた方」リンクが表示される"""
+    resp = client.get(LOGIN_URL)
+
+    assert resp.status_code == 200
+    assert PASSWORD_RESET_URL in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_password_reset_page_renders(client):
+    """リセット申請フォームが表示される"""
+    resp = client.get(PASSWORD_RESET_URL)
+
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_password_reset_sends_email_for_existing_user(client, cleared_cache):
+    """登録済みメールアドレスにはリセットメールが送信される"""
+    from django.core import mail
+
+    User.objects.create_user(email="reset-me@example.com", password="oldpass123")
+
+    resp = client.post(PASSWORD_RESET_URL, {"email": "reset-me@example.com"})
+
+    assert resp.status_code == 302
+    assert resp.url == "/accounts/password-reset/done/"
+    assert len(mail.outbox) == 1
+    assert "reset-me@example.com" in mail.outbox[0].to
+    assert "/accounts/reset/" in mail.outbox[0].body
+
+
+@pytest.mark.django_db
+def test_password_reset_unknown_email_no_enumeration(client, cleared_cache):
+    """未登録メールでも同じ画面に遷移する（メールアドレス列挙の防止）"""
+    from django.core import mail
+
+    resp = client.post(PASSWORD_RESET_URL, {"email": "nobody@example.com"})
+
+    assert resp.status_code == 302
+    assert resp.url == "/accounts/password-reset/done/"
+    assert len(mail.outbox) == 0
+
+
+@pytest.mark.django_db
+def test_password_reset_full_flow_allows_login_with_new_password(client, cleared_cache):
+    """メール内リンクから新パスワードを設定し、ログインできる（E2E フロー）"""
+    import re
+
+    from django.core import mail
+
+    user = User.objects.create_user(email="flow@example.com", password="oldpass123")
+
+    # 1. リセット申請 → メール送信
+    client.post(PASSWORD_RESET_URL, {"email": "flow@example.com"})
+    assert len(mail.outbox) == 1
+
+    # 2. メール本文からリセットリンクを抽出
+    match = re.search(r"(/accounts/reset/[^/]+/[^/]+/)", mail.outbox[0].body)
+    assert match, "リセットリンクがメール本文に見つからない"
+    reset_path = match.group(1)
+
+    # 3. リンクにアクセス（Django はトークンをセッションに保存してリダイレクトする）
+    resp = client.get(reset_path)
+    assert resp.status_code == 302
+    set_password_path = resp.url
+
+    # 4. 新パスワードを設定
+    resp = client.post(
+        set_password_path,
+        {"new_password1": "NewStrongPass1!", "new_password2": "NewStrongPass1!"},
+    )
+    assert resp.status_code == 302
+    assert resp.url == "/accounts/reset/done/"
+
+    # 5. 新パスワードでログインできる
+    user.refresh_from_db()
+    assert user.check_password("NewStrongPass1!")
+
+    resp = client.post(
+        LOGIN_URL, {"email": "flow@example.com", "password": "NewStrongPass1!"}
+    )
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_password_reset_confirm_invalid_token_shows_expired(client):
+    """無効なトークンでは再申請への導線が表示される"""
+    resp = client.get("/accounts/reset/Mg/invalid-token/")
+
+    assert resp.status_code == 200
+    assert PASSWORD_RESET_URL in resp.content.decode()
+
+
+# ---------------------------------------------------------------------------
+# パスワードリセット IP レートリミット（W-a）
+# ---------------------------------------------------------------------------
+
+PASSWORD_RESET_DONE_URL = "/accounts/password-reset/done/"
+
+
+def _post_password_reset(email, remote_addr):
+    """毎回新規クライアントで REMOTE_ADDR を指定して申請する"""
+    c = Client()
+    return c.post(PASSWORD_RESET_URL, {"email": email}, REMOTE_ADDR=remote_addr)
+
+
+@pytest.mark.django_db
+@override_settings(TRUSTED_PROXY_COUNT=0)
+def test_password_reset_rate_limit_allows_within_limit(cleared_cache):
+    """制限内（5回/時）はすべてメールが送信される"""
+    from django.core import mail
+
+    User.objects.create_user(email="rl-reset1@example.com", password="oldpass123")
+
+    for i in range(5):
+        resp = _post_password_reset("rl-reset1@example.com", remote_addr="10.0.0.1")
+        assert resp.status_code == 302, f"unexpected status at attempt {i + 1}"
+        assert resp.url == PASSWORD_RESET_DONE_URL
+
+    assert len(mail.outbox) == 5
+
+
+@pytest.mark.django_db
+@override_settings(TRUSTED_PROXY_COUNT=0)
+def test_password_reset_rate_limit_blocks_after_limit(cleared_cache):
+    """制限超過後はメールを送らず、通常と同じ done 画面へ遷移する"""
+    from django.core import mail
+
+    User.objects.create_user(email="rl-reset2@example.com", password="oldpass123")
+
+    for _ in range(5):
+        _post_password_reset("rl-reset2@example.com", remote_addr="10.0.0.2")
+    assert len(mail.outbox) == 5
+
+    resp = _post_password_reset("rl-reset2@example.com", remote_addr="10.0.0.2")
+    assert resp.status_code == 302
+    assert resp.url == PASSWORD_RESET_DONE_URL  # 429 ではなく通常の done 画面
+    assert len(mail.outbox) == 5  # 追加送信されない
+
+
+@pytest.mark.django_db
+@override_settings(TRUSTED_PROXY_COUNT=0)
+def test_password_reset_rate_limit_no_enumeration_difference(cleared_cache):
+    """制限超過時、登録済み/未登録メールで応答に差がない（列挙防止）"""
+    from django.core import mail
+
+    User.objects.create_user(email="rl-reset3@example.com", password="oldpass123")
+
+    for _ in range(5):
+        _post_password_reset("rl-reset3@example.com", remote_addr="10.0.0.3")
+
+    resp_known = _post_password_reset(
+        "rl-reset3@example.com", remote_addr="10.0.0.3"
+    )
+    resp_unknown = _post_password_reset(
+        "nobody-rl@example.com", remote_addr="10.0.0.3"
+    )
+
+    assert resp_known.status_code == resp_unknown.status_code == 302
+    assert resp_known.url == resp_unknown.url == PASSWORD_RESET_DONE_URL
+    assert len(mail.outbox) == 5
+
+
+@pytest.mark.django_db
+@override_settings(TRUSTED_PROXY_COUNT=0)
+def test_password_reset_rate_limit_different_ips_independent(cleared_cache):
+    """IP が異なれば別カウントで、制限に達しない IP からは送信される"""
+    from django.core import mail
+
+    User.objects.create_user(email="rl-reset4@example.com", password="oldpass123")
+
+    for _ in range(5):
+        _post_password_reset("rl-reset4@example.com", remote_addr="10.0.0.4")
+    assert len(mail.outbox) == 5
+
+    resp = _post_password_reset("rl-reset4@example.com", remote_addr="10.0.0.5")
+    assert resp.status_code == 302
+    assert len(mail.outbox) == 6
