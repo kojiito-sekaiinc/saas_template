@@ -144,6 +144,31 @@ def check_stripe_webhook_secret() -> tuple[str, str, str]:
     return OK, "STRIPE_WEBHOOK_SECRET", "set"
 
 
+_CONSOLE_EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+_DEFAULT_FROM_EMAIL_PLACEHOLDER = "noreply@example.com"
+
+
+def check_email_backend() -> tuple[str, str, str]:
+    """
+    本番（DEBUG=False）で console backend のままだと、パスワードリセットメールが
+    ユーザーに届かず、リセットリンク（トークン付き）が標準出力ログに平文で残る。
+    ログ閲覧権限者が任意アカウントのパスワードを変更できるため ERROR とする。
+    """
+    debug = getattr(settings, "DEBUG", False)
+    backend = getattr(settings, "EMAIL_BACKEND", "")
+
+    if not debug and backend == _CONSOLE_EMAIL_BACKEND:
+        return ERROR, "EMAIL_BACKEND", "console backend in production"
+    return OK, "EMAIL_BACKEND", backend or "<not set>"
+
+
+def check_default_from_email() -> tuple[str, str, str]:
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
+    if from_email == _DEFAULT_FROM_EMAIL_PLACEHOLDER:
+        return WARNING, "DEFAULT_FROM_EMAIL", f"{from_email} (default placeholder)"
+    return OK, "DEFAULT_FROM_EMAIL", from_email
+
+
 # チェック実行順序（仕様書に準拠）
 _CHECKS = [
     check_debug_and_secret_key,
@@ -154,6 +179,8 @@ _CHECKS = [
     check_stripe_secret_key,
     check_stripe_price_id,
     check_stripe_webhook_secret,
+    check_email_backend,
+    check_default_from_email,
 ]
 
 

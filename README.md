@@ -189,8 +189,10 @@ OK       CSRF_TRUSTED_ORIGINS     ok
 OK       STRIPE_SECRET_KEY        set
 OK       STRIPE_PRICE_ID          price_live_xxx
 OK       STRIPE_WEBHOOK_SECRET    set
+OK       EMAIL_BACKEND            django.core.mail.backends.smtp.EmailBackend
+OK       DEFAULT_FROM_EMAIL       noreply@yourdomain.com
 
-Summary: ok=8 warning=0 error=0
+Summary: ok=10 warning=0 error=0
 ```
 
 ERROR が 1 件でもあると exit(1) になります。詳細は `docs/RUNBOOK.md` を参照してください。

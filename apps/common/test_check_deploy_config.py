@@ -21,12 +21,17 @@ from apps.common.management.commands.check_deploy_config import (
     check_allowed_hosts,
     check_csrf_trusted_origins,
     check_debug_and_secret_key,
+    check_default_from_email,
+    check_email_backend,
     check_site_url,
     check_site_url_in_allowed_hosts,
     check_stripe_price_id,
     check_stripe_secret_key,
     check_stripe_webhook_secret,
 )
+
+_CONSOLE_BACKEND = "django.core.mail.backends.console.EmailBackend"
+_SMTP_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 
 # ---------------------------------------------------------------------------
@@ -239,6 +244,46 @@ def test_stripe_webhook_secret_empty_is_error():
 
 
 # ---------------------------------------------------------------------------
+# check_email_backend / check_default_from_email（C-2）
+# ---------------------------------------------------------------------------
+
+@override_settings(DEBUG=False, EMAIL_BACKEND=_CONSOLE_BACKEND)
+def test_email_backend_console_in_production_is_error():
+    # 本番で console のままだとリセットトークンがログに平文で残るため ERROR
+    level, name, message = check_email_backend()
+    assert level == ERROR
+    assert name == "EMAIL_BACKEND"
+    assert "console" in message
+
+
+@override_settings(DEBUG=True, EMAIL_BACKEND=_CONSOLE_BACKEND)
+def test_email_backend_console_in_debug_is_ok():
+    level, _, _ = check_email_backend()
+    assert level == OK
+
+
+@override_settings(DEBUG=False, EMAIL_BACKEND=_SMTP_BACKEND)
+def test_email_backend_smtp_in_production_is_ok():
+    level, name, _ = check_email_backend()
+    assert level == OK
+    assert name == "EMAIL_BACKEND"
+
+
+@override_settings(DEFAULT_FROM_EMAIL="noreply@example.com")
+def test_default_from_email_placeholder_is_warning():
+    level, name, message = check_default_from_email()
+    assert level == WARNING
+    assert name == "DEFAULT_FROM_EMAIL"
+    assert "noreply@example.com" in message
+
+
+@override_settings(DEFAULT_FROM_EMAIL="noreply@myservice.jp")
+def test_default_from_email_custom_is_ok():
+    level, _, _ = check_default_from_email()
+    assert level == OK
+
+
+# ---------------------------------------------------------------------------
 # management command: 出力フォーマット
 # ---------------------------------------------------------------------------
 
@@ -251,6 +296,8 @@ def test_stripe_webhook_secret_empty_is_error():
     STRIPE_SECRET_KEY="sk_live_xxx",
     STRIPE_PRICE_ID="price_live_xxx",
     STRIPE_WEBHOOK_SECRET="whsec_xxx",
+    EMAIL_BACKEND=_SMTP_BACKEND,
+    DEFAULT_FROM_EMAIL="noreply@myservice.jp",
 )
 def test_command_text_output_all_ok():
     out = StringIO()
@@ -272,6 +319,8 @@ def test_command_text_output_all_ok():
     STRIPE_SECRET_KEY="sk_live_xxx",
     STRIPE_PRICE_ID="price_live_xxx",
     STRIPE_WEBHOOK_SECRET="whsec_xxx",
+    EMAIL_BACKEND=_SMTP_BACKEND,
+    DEFAULT_FROM_EMAIL="noreply@myservice.jp",
 )
 def test_command_json_output_is_valid_json():
     out = StringIO()
@@ -282,6 +331,11 @@ def test_command_json_output_is_valid_json():
     assert "summary" in data
     assert isinstance(data["results"], list)
     assert {"ok", "warning", "error"} == set(data["summary"].keys())
+
+    # C-2: EMAIL 系チェックが JSON 出力にも含まれる
+    names = {r["name"] for r in data["results"]}
+    assert "EMAIL_BACKEND" in names
+    assert "DEFAULT_FROM_EMAIL" in names
 
 
 @override_settings(
@@ -317,6 +371,8 @@ def test_command_json_output_has_correct_summary_counts():
     STRIPE_SECRET_KEY="sk_live_xxx",
     STRIPE_PRICE_ID="price_live_xxx",
     STRIPE_WEBHOOK_SECRET="whsec_xxx",
+    EMAIL_BACKEND=_SMTP_BACKEND,
+    DEFAULT_FROM_EMAIL="noreply@myservice.jp",
 )
 def test_exit_code_0_when_no_error_no_warning():
     out = StringIO()
