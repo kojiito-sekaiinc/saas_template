@@ -74,15 +74,15 @@
 {#   spacing.10 — empty state vertical padding                             #}
 {# ====================================================================== #}
 
-{% with _empty=empty_message|default:"No data to display." _borderless=borderless|default:False %}
-{% with _show_actions=show_actions|default:False %}
+{% with resolved_empty=empty_message|default:"No data to display." resolved_borderless=borderless|default:False %}
+{% with resolved_show_actions=show_actions|default:False %}
 
 {# ------------------------------------------------------------------ #}
 {# Outer wrapper                                                        #}
 {# borderless=True: no border/radius — for embedding inside a card.    #}
 {# borderless=False (default): standalone table with own border.       #}
 {# ------------------------------------------------------------------ #}
-{% if _borderless %}
+{% if resolved_borderless %}
 <div class="w-full overflow-x-auto">
 {% else %}
 <div class="w-full overflow-x-auto rounded-token-md border border-sekai-border">
@@ -109,7 +109,7 @@
 
         {# Actions column header — shown only when show_actions=True is explicit #}
         {# By convention the header label is empty; right-alignment signals purpose. #}
-        {% if _show_actions %}
+        {% if resolved_show_actions %}
         <th scope="col"
             class="px-token-4 py-token-3
                    text-token-xs font-token-medium text-sekai-text-muted
@@ -140,7 +140,7 @@
           {% endfor %}
 
           {# Actions cell — right-aligned #}
-          {% if _show_actions %}
+          {% if resolved_show_actions %}
           <td class="px-token-4 py-token-3 text-right whitespace-nowrap">
             {% if row.actions %}
             <div class="inline-flex items-center gap-token-4">
@@ -168,10 +168,10 @@
         {# ---- Empty state ---- #}
         {# colspan adds 1 only when the actions column is actually rendered. #}
         <tr>
-          <td colspan="{% if _show_actions %}{{ headers|length|add:1 }}{% else %}{{ headers|length }}{% endif %}"
+          <td colspan="{% if resolved_show_actions %}{{ headers|length|add:1 }}{% else %}{{ headers|length }}{% endif %}"
               class="px-token-4 py-token-10
                      text-center text-token-sm text-sekai-text-subtle">
-            {{ _empty }}
+            {{ resolved_empty }}
           </td>
         </tr>
       {% endif %}
@@ -181,4 +181,5 @@
   </table>
 </div>
 
+{% endwith %}
 {% endwith %}

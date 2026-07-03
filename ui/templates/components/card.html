@@ -47,7 +47,7 @@
 {#   shadow.sm / shadow.none                                               #}
 {# ====================================================================== #}
 
-{% with _pad=padding|default:"md" %}
+{% with resolved_pad=padding|default:"md" %}
 
 <div class="bg-sekai-surface border border-sekai-border rounded-token-md
             {% if shadow %}shadow-token-sm{% else %}shadow-token-none{% endif %}
@@ -58,8 +58,8 @@
   {# ------------------------------------------------------------------ #}
   {% if card_title %}
   <div class="flex items-start justify-between
-              {% if _pad == 'sm' %}px-token-4 py-token-3
-              {% elif _pad == 'lg' %}px-token-8 py-token-6
+              {% if resolved_pad == 'sm' %}px-token-4 py-token-3
+              {% elif resolved_pad == 'lg' %}px-token-8 py-token-6
               {% else %}px-token-6 py-token-4
               {% endif %}
               border-b border-sekai-border">
@@ -81,8 +81,8 @@
   {# ------------------------------------------------------------------ #}
   {# Card body                                                           #}
   {# ------------------------------------------------------------------ #}
-  <div class="{% if _pad == 'sm' %}p-token-4
-              {% elif _pad == 'lg' %}p-token-8
+  <div class="{% if resolved_pad == 'sm' %}p-token-4
+              {% elif resolved_pad == 'lg' %}p-token-8
               {% else %}p-token-6
               {% endif %}">
 
@@ -111,8 +111,8 @@
   {# Optional footer                                                     #}
   {# ------------------------------------------------------------------ #}
   {% if footer_html %}
-  <div class="{% if _pad == 'sm' %}px-token-4 py-token-3
-              {% elif _pad == 'lg' %}px-token-8 py-token-5
+  <div class="{% if resolved_pad == 'sm' %}px-token-4 py-token-3
+              {% elif resolved_pad == 'lg' %}px-token-8 py-token-5
               {% else %}px-token-6 py-token-4
               {% endif %}
               border-t border-sekai-border

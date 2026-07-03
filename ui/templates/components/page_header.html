@@ -46,11 +46,11 @@
 {#   line_height_relaxed — description                                     #}
 {# ====================================================================== #}
 
-{% with _divider=divider|default:True %}
+{% with resolved_divider=divider|default:True %}
 
 <div class="flex flex-wrap items-start justify-between gap-token-6
             pb-token-6
-            {% if _divider %}border-b border-sekai-border mb-token-8{% endif %}">
+            {% if resolved_divider %}border-b border-sekai-border mb-token-8{% endif %}">
 
   {# ---- Title + description column ---- #}
   <div class="flex flex-col gap-token-2 min-w-0">

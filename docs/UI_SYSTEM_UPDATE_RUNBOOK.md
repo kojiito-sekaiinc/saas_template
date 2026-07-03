@@ -65,6 +65,29 @@ SaaS Template 側の `ui/` ディレクトリを更新する。
 
 この段階では **まだテンプレート修正は行わない。**
 
+## ⚠️ TEMPLATES.DIRS の確認（必須）
+
+Django が実際に読むのは `config/settings.py` の `TEMPLATES.DIRS`
+に列挙されたディレクトリだけである。
+
+現在の設定：
+
+    "DIRS": [BASE_DIR / "templates", BASE_DIR / "ui" / "templates"]
+
+`ui/` 配下のディレクトリ構成を変更（移動・改名・再編）した場合は、
+**必ず `TEMPLATES.DIRS` が新しい構成を指しているか確認する。**
+
+確認方法：
+
+    pytest apps/app/tests.py -q
+
+`/app/customers/` を実際に GET する回帰テストが含まれており、
+`layouts/` `components/` が解決できないと失敗する。
+
+過去の事故：`ui/` を `ui/system` / `ui/handoffs` / `ui/templates` に
+再編した際、`DIRS` が旧構成（`BASE_DIR / "ui"`）のまま残り、
+`/app/customers/` が TemplateDoesNotExist で 500 になった。
+
 ------------------------------------------------------------------------
 
 # 3. AI に影響分析させる

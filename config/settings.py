@@ -101,7 +101,10 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates", BASE_DIR / "ui"],
+        # ui/templates は Sekai UI System 由来の layouts/ components/ を提供する。
+        # ui/ 直下ではなく ui/templates を指定しないと layouts/app_shell.html 等が
+        # 解決できず /app/customers/ が 500 になる（docs/UI_SYSTEM_UPDATE_RUNBOOK.md 参照）。
+        "DIRS": [BASE_DIR / "templates", BASE_DIR / "ui" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

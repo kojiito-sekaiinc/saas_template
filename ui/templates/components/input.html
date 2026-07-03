@@ -50,13 +50,13 @@
 {#   radius.sm               — input corners                               #}
 {# ====================================================================== #}
 
-{% with _id=id|default:name _type=type|default:"text" %}
+{% with resolved_id=id|default:name resolved_type=type|default:"text" %}
 
 <div class="flex flex-col gap-token-2">
 
   {# ---- Label ---- #}
   {% if label %}
-  <label for="{{ _id }}"
+  <label for="{{ resolved_id }}"
          class="text-token-sm font-token-medium text-sekai-text leading-normal">
     {{ label }}
     {% if required %}
@@ -67,15 +67,15 @@
 
   {# ---- Input field ---- #}
   <input
-    type="{{ _type }}"
+    type="{{ resolved_type }}"
     name="{{ name }}"
-    id="{{ _id }}"
+    id="{{ resolved_id }}"
     {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
     {% if value is not None %}value="{{ value }}"{% endif %}
     {% if required %}required aria-required="true"{% endif %}
     {% if disabled %}disabled{% endif %}
     {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
-    {% if error %}aria-invalid="true" aria-describedby="{{ _id }}-message"{% elif help_text %}aria-describedby="{{ _id }}-message"{% endif %}
+    {% if error %}aria-invalid="true" aria-describedby="{{ resolved_id }}-message"{% elif help_text %}aria-describedby="{{ resolved_id }}-message"{% endif %}
     class="w-full px-token-3 py-token-2 text-token-sm text-sekai-text
            bg-sekai-surface
            border rounded-token-sm
@@ -94,13 +94,13 @@
 
   {# ---- Error message ---- #}
   {% if error %}
-  <p id="{{ _id }}-message" class="text-token-xs text-sekai-danger leading-normal" role="alert">
+  <p id="{{ resolved_id }}-message" class="text-token-xs text-sekai-danger leading-normal" role="alert">
     {{ error }}
   </p>
 
   {# ---- Help text (shown only when no error) ---- #}
   {% elif help_text %}
-  <p id="{{ _id }}-message" class="text-token-xs text-sekai-text-muted leading-normal">
+  <p id="{{ resolved_id }}-message" class="text-token-xs text-sekai-text-muted leading-normal">
     {{ help_text }}
   </p>
   {% endif %}
