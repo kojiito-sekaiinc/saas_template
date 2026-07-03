@@ -46,7 +46,7 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 
 # 2. 依存パッケージをインストール
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # 開発用（pytest / Playwright 含む。本番のみなら requirements.txt）
 
 # 3. 環境変数をコピーして編集
 cp .env.example .env

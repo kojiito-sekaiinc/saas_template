@@ -1,0 +1,28 @@
+# ============================================================
+# requirements-dev.txt — 開発・テスト用の依存関係
+#
+# 本番依存（requirements.txt）に加えて、pytest / Playwright E2E を含む。
+# ローカル開発と CI はこちらを使う:
+#     pip install -r requirements-dev.txt
+#
+# E2E テストは初回のみブラウザのインストールが必要:
+#     playwright install chromium
+# ============================================================
+
+-r requirements.txt
+
+# Testing
+pytest==8.4.2
+iniconfig==2.3.0
+pluggy==1.6.0
+Pygments==2.19.2
+pytest-django==4.12.0
+
+# E2E (Playwright)
+pytest-playwright==0.8.0
+pytest-base-url==2.1.0
+playwright==1.60.0
+greenlet==3.5.2
+pyee==13.0.1
+python-slugify==8.0.4
+text-unidecode==1.3

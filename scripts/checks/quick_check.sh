@@ -5,6 +5,16 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# 依存チェック: venv 未有効化や依存不足で意味不明なエラーになるのを防ぐ
+if ! python -c "import django, pytest, axes" 2>/dev/null; then
+    echo "ERROR: 必要な依存が見つかりません (django / pytest / django-axes)。" >&2
+    echo >&2
+    echo "  以下を確認してください:" >&2
+    echo "    1. 仮想環境を有効化しているか:  source .venv/bin/activate" >&2
+    echo "    2. 開発用依存を入れているか:    pip install -r requirements-dev.txt" >&2
+    exit 1
+fi
+
 echo "===================================="
 echo " Running quick checks for this repo "
 echo "===================================="
