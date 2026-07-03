@@ -39,6 +39,9 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          # EMAIL チェック（check_deploy_config）用の本番相当ダミー値
+          EMAIL_BACKEND: "django.core.mail.backends.smtp.EmailBackend"
+          DEFAULT_FROM_EMAIL: "noreply@yourdomain.com"
         run: python manage.py check_deploy_config --fail-on-warning
 
   e2e:
