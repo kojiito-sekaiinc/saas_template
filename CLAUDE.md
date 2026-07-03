@@ -354,3 +354,9 @@ npx playwright test
 - visual layout problems
 
 3. Do not mark task complete until Playwright passes
+
+
+
+Never say "implementation completed"
+
+before Playwright E2E tests pass.
