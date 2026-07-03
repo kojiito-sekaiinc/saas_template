@@ -97,8 +97,11 @@ def checkout(request):
             return HttpResponse("An error occurred. Please try again later.", status=500)
 
     # --- フェーズ4: Stripe Checkout セッション作成（トランザクション外）---
+    # バージョン要素（v2 等）: Session.create のパラメータを変更すると、
+    # 同一キー・異パラメータで Stripe が idempotency エラーを返すため、
+    # パラメータを変更する際は必ず版数を上げること。
     hour_bucket = int(datetime.now(dt_timezone.utc).timestamp()) // 3600
-    idempotency_key = f"checkout_{request.user.id}_{hour_bucket}"
+    idempotency_key = f"checkout_v2_{request.user.id}_{hour_bucket}"
 
     try:
         session = stripe.checkout.Session.create(
@@ -112,7 +115,11 @@ def checkout(request):
             ],
             success_url=success_url,
             cancel_url=cancel_url,
+            # Session の metadata は Subscription に伝播しないため、
+            # subscription_data.metadata にも設定する。これにより Webhook 側の
+            # _find_user_for_subscription() の第一経路（metadata.user_id）が機能する。
             metadata={"user_id": str(request.user.id)},
+            subscription_data={"metadata": {"user_id": str(request.user.id)}},
             idempotency_key=idempotency_key,
         )
         return redirect(session.url)
@@ -227,7 +234,46 @@ def _handle_subscription_event(
         return
     current_period_end_ts = subscription.get("current_period_end")
 
-    if event_type != "customer.subscription.deleted":
+    if event_type == "customer.subscription.deleted":
+        # deleted イベントは items が空になり得るため price 検証を通せない。
+        # 既知の stripe_subscription_id なら従来通り反映する。
+        if not BillingProfile.objects.filter(
+            stripe_subscription_id=stripe_subscription_id
+        ).exists():
+            # 未知 subscription の deleted を無条件に無視すると、
+            # deleted が created より先に到着したケースで後続の created(active) が
+            # 処理され「解約済みなのに active」の fail-open になる。
+            # そのため、ユーザーを解決でき、かつイベントの customer がそのユーザーの
+            # stripe_customer_id と一致する（= 自サービスの Checkout が作った
+            # customer である）場合のみ canceled として処理し、
+            # last_stripe_event_created を記録して out-of-order ガードを効かせる。
+            # 同一 Stripe アカウントを共有する他サービスの解約イベントは
+            # customer 不一致（または metadata 不在）で除外される（fail-closed）。
+            resolved_user = _find_user_for_subscription(
+                subscription, stripe_customer_id
+            )
+            customer_owned = (
+                resolved_user is not None
+                and BillingProfile.objects.filter(
+                    user=resolved_user,
+                    stripe_customer_id=stripe_customer_id,
+                ).exists()
+            )
+            if not customer_owned:
+                logger.warning(
+                    "Stripe deleted event ignored (unknown subscription, "
+                    "customer not owned by resolved user): "
+                    f"event_id={event_id}, "
+                    f"subscription_id={stripe_subscription_id}, "
+                    f"customer_id={stripe_customer_id}"
+                )
+                return
+            logger.info(
+                "Stripe deleted event for unknown subscription accepted "
+                "(customer matched; deleted likely arrived before created): "
+                f"event_id={event_id}, subscription_id={stripe_subscription_id}"
+            )
+    else:
         if not _is_valid_subscription(subscription, settings.STRIPE_PRICE_ID):
             # 既知のサブスクなら status 更新を許可（past_due, unpaid 等を拾う）
             if not BillingProfile.objects.filter(
