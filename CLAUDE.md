@@ -62,29 +62,87 @@ No substitutions or architectural changes are allowed unless explicitly instruct
 
 ---
 
-## 4. Core Business Rules (FIXED)
+## 4. Core Business Rules (DEFAULT)
 
-### Subscription
+This section defines the **default billing model** for this template:
+**Trial-based Subscription**. It applies unless an alternative Billing
+Strategy has been through the governance process in **Section 4-bis**.
+
+### Subscription (Default)
 - Subscription billing ONLY
 - Monthly billing ONLY
 - Single plan ONLY
 - Price: **980 JPY / month**
 
-### Free Access
+### Free Access (Default)
 - Free usage for **7 days after signup**
 - No credit card required during free period
 - Free period is managed by application logic (`Profile.free_until`)
 - Stripe trial feature MUST NOT be used
 
+These defaults are what Claude Code MUST implement unless Section
+4-bis's approval process has been completed for this product.
+
+---
+
+## 4-bis. Billing Strategy Governance (Template Evolution)
+
+This template must stay safe to duplicate and reuse, while still
+letting individual SaaS products adopt a different billing model than
+the Trial-based Subscription default (e.g. Freemium, Usage-based,
+Feature-based, or tiered plans).
+
+### When an Alternative Billing Strategy May Be Used
+
+An alternative Billing Strategy is allowed for a derived product ONLY
+when **all** of the following are true:
+
+1. The strategy is explicitly documented in `docs/product-context.md`
+   under its `## Billing Strategy` section (e.g. `Freemium`,
+   `Usage-based`, `Feature-based`).
+2. The **template owner** has explicitly approved adopting that
+   strategy for this product. Approval MUST be recorded — e.g. by
+   moving the item from *Proposed* to *Accepted* in
+   `docs/template-evolution.md`, or via explicit written approval from
+   the user in the conversation/PR.
+3. Design, implementation, and documentation are updated together as
+   a single approved change set (billing/paywall design, the
+   `apps/billing` implementation and paywall middleware, and this
+   document / relevant skill files) — not implemented ad hoc or split
+   across unrelated commits.
+
+### What Claude Code MUST Do
+
+- Claude Code (including the Builder role) MUST NOT change
+  billing/paywall logic (`apps/billing`, `Profile.free_until`, the
+  paywall middleware, or the rules in Sections 4-8) based solely on
+  its own judgment or on an unapproved `docs/product-context.md`
+  entry.
+- If `docs/product-context.md` names a Billing Strategy different
+  from the default and no recorded template-owner approval exists,
+  Claude Code MUST stop and ask the user for explicit approval before
+  implementing anything.
+- Once approval is recorded, follow the normal Explore → Plan →
+  Implement workflow (Section 10-bis) to design and implement the
+  approved strategy, and update this document (or a linked ADR) to
+  reflect the new default for that product.
+
+In short: billing/paywall rules are **not permanently frozen** — they
+**cannot be changed without explicit, recorded template-owner
+approval.**
+
 ---
 
 ## 5. Paywall Rules (CRITICAL)
+
+_Default model, governed by Section 4-bis. Do not change without
+recorded template-owner approval._
 
 ### Paid Feature Boundary
 - ALL paid features MUST live under `/app/`
 - No exceptions
 
-### Access Rules for `/app/`
+### Access Rules for `/app/` (Default)
 Access is allowed ONLY if:
 - Current time ≤ `Profile.free_until`
 - OR subscription status == `active`
@@ -95,6 +153,9 @@ Otherwise:
 ---
 
 ## 6. Stripe & Billing Rules (STRICT)
+
+_These rules are strategy-agnostic: they apply regardless of which
+Billing Strategy is active under Section 4-bis._
 
 - Stripe Checkout MUST be used for subscription creation
 - Stripe Customer Portal MUST be used for cancellation and payment updates
@@ -160,19 +221,25 @@ When creating new services:
 
 ---
 
-## 9. Forbidden Actions (ABSOLUTE)
+## 9. Forbidden Actions
 
-The following actions are strictly forbidden:
+### Always Forbidden (ABSOLUTE — no approval overrides these)
 
 - Introducing React, Next.js, Vue, or any frontend framework
 - Splitting frontend and backend into separate applications
-- Using Stripe trial features
-- Creating multiple pricing plans or tiers
 - Activating subscriptions outside Stripe Webhook
 - Adding paid features outside `/app/`
 - Changing folder structure without instruction
 - Adding advanced CI/CD pipelines or heavy automation
 - Over-engineering abstractions or future-proofing
+
+### Forbidden Without Recorded Template-Owner Approval (see Section 4-bis)
+
+- Using Stripe trial features instead of application-managed free
+  access
+- Creating multiple pricing plans or tiers
+- Changing the billing model away from Trial-based Subscription
+  (e.g. to Freemium, Usage-based, Feature-based)
 
 If uncertain:
 > **DELETE code rather than add complexity.**
