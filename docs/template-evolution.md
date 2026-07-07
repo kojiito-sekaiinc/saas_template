@@ -19,3 +19,7 @@
   (Explore → Plan → Human Approval → Implement → Verify),
   mandatory docs/implementation-plan.md, Definition of Done
   (2026-07-07, 100Lists開発の知見をテンプレートへ還元)
+- Sweeper SubAgent v2 — 5-phase gated workflow
+  (Analyze → Sweep Plan → Human Approval → Sweep → Verify),
+  mandatory docs/sweep-plan.md, Delete-over-Add Definition of Done
+  (2026-07-07, Builder v2 と同一思想で役割分離を維持)

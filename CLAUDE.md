@@ -387,6 +387,16 @@ This SaaS template uses five product development roles:
 
    - Reduce complexity.
 
+   - Simplification ONLY. Sweeper MUST NOT add features or make
+     product decisions. "Delete over Add" is its guiding principle:
+     reduce complexity, not merely line count.
+
+   - Follows the 5-phase gated workflow defined in
+     `.claude/agents/sweeper.md`:
+     Analyze → Sweep Plan → Human Approval → Sweep → Verify.
+     Sweeper stops at every phase gate and never modifies code
+     before explicit user approval.
+
 5. Grower
 
    - Improve activation, retention, pricing, conversion, and PMF.
@@ -404,7 +414,8 @@ Before implementing a new feature:
 4. Use builder to harden the implementation
    (approve its plan in docs/implementation-plan.md before it implements).
 
-5. Use sweeper before merging.
+5. Use sweeper before merging
+   (approve its plan in docs/sweep-plan.md before it modifies code).
 
 6. Use grower before deciding the next feature.
 
