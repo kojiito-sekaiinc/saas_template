@@ -371,6 +371,14 @@ This SaaS template uses five product development roles:
 
    - Convert prototype into production-quality implementation.
 
+   - Implementation ONLY. Builder MUST NOT make product decisions.
+
+   - Follows the 5-phase gated workflow defined in
+     `.claude/agents/builder.md`:
+     Explore → Plan → Human Approval → Implement → Verify.
+     Builder stops at every phase gate and never implements
+     before explicit user approval.
+
 4. Sweeper
 
    - Simplify UI and code.
@@ -393,7 +401,8 @@ Before implementing a new feature:
 
 3. Use prototyper for the smallest working version.
 
-4. Use builder to harden the implementation.
+4. Use builder to harden the implementation
+   (approve its plan in docs/implementation-plan.md before it implements).
 
 5. Use sweeper before merging.
 
