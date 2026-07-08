@@ -66,8 +66,12 @@ Phase 5: Verify         → Definition of Done
 
 Do not edit files. Do not run state-changing commands.
 
-Investigate at minimum:
+Investigate at minimum, in this order:
 
+- docs/product-definition.md and docs/product-decisions.md — read
+  these FIRST. docs/product-decisions.md is the Single Source of
+  Truth (SSOT) for product decisions; both are authoritative product
+  context that takes precedence over your own inference
 - docs/product-context.md — Product Context and Billing Strategy
 - docs/mvp-scope.md — MVP Scope
 - docs/growth-decisions.md — Growth Decisions

@@ -363,6 +363,22 @@ This SaaS template uses five product development roles:
 
    - Clarify what not to build.
 
+   - Product Decision ONLY. Product Strategist MUST NOT implement
+     code, change UI, refactor, or execute growth experiments — those
+     belong to Builder, Sweeper, and Grower respectively.
+
+   - Follows the 5-phase gated workflow defined in
+     `.claude/agents/product-strategist.md`:
+     Discover → Product Definition → Human Approval → Readiness
+     Assessment → Decision Log.
+     Product Strategist stops at every phase gate and never declares
+     Builder readiness before explicit user approval.
+
+   - docs/product-decisions.md is the Single Source of Truth (SSOT)
+     for product decisions; Builder should treat it, alongside
+     docs/product-definition.md, as authoritative context before
+     starting its own Explore phase.
+
 2. Prototyper
 
    - Build the fastest working version.
@@ -419,7 +435,9 @@ This SaaS template uses five product development roles:
 
 Before implementing a new feature:
 
-1. Use product-strategist.
+1. Use product-strategist
+   (approve its output in docs/product-definition.md before Builder
+   readiness is assessed).
 
 2. Update docs/mvp-scope.md if needed.
 

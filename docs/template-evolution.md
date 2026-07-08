@@ -29,3 +29,11 @@
   docs/growth-decisions.md, Definition of Done
   (2026-07-08, Builder/Sweeper v2 と同一思想で役割分離を維持;
   100Lists専用ではなくテンプレート全体の改善として実施)
+- Product Strategist SubAgent v2 — 5-phase gated workflow (Discover →
+  Product Definition → Human Approval → Readiness Assessment →
+  Decision Log), mandatory docs/product-definition.md, Builder
+  readiness verdict (READY / NOT READY / READY WITH RISKS),
+  docs/product-decisions.md as SSOT for product decisions, Product
+  Decision ONLY
+  (2026-07-08, Builder/Sweeper/Grower v2 と同一思想で役割分離を維持;
+  100Lists専用ではなくテンプレート全体の改善として実施)
