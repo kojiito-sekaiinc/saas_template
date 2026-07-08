@@ -470,9 +470,25 @@ Before implementing a new feature:
    (approve its plan in docs/review-plan.md; ship only when the
    Release Recommendation is APPROVED or APPROVED WITH RISKS).
 
+8. Follow docs/agent-workflow.md for multi-agent coordination.
+
 Do not build features only because they are easy.
 
 Always identify what should not be built.
+
+## Agent Orchestration
+
+`docs/agent-workflow.md` is the Single Source of Truth (SSOT) for:
+
+- The execution order of the product development SubAgents
+  (Product Strategist, Builder, Sweeper, Grower, Reviewer)
+- The artifacts handed off between them
+- The standard development flow from idea to release
+
+The Agent Orchestrator described there is not itself a SubAgent — it
+makes no product, implementation, simplification, growth, or review
+decisions. Consult it whenever more than one agent is involved in a
+change.
 
 
 ## Testing Rules

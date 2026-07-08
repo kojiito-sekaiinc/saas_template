@@ -47,3 +47,7 @@
   (2026-07-08, Builder/Sweeper/Grower/Product Strategist v2 と
   同一思想で役割分離を維持; 100Lists専用ではなくテンプレート全体の
   改善として実施)
+- Agent Orchestrator v1 — artifact-driven multi-agent workflow, role
+  boundaries, standard development flow, and release coordination
+  across Product Strategist, Builder, Sweeper, Grower, and Reviewer
+  (2026-07-08)
