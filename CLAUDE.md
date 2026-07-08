@@ -353,7 +353,7 @@ Before completing any task, you MUST verify:
 
 ## Product Development Roles
 
-This SaaS template uses five product development roles:
+This SaaS template uses six product development roles:
 
 1. Product Strategist
 
@@ -431,6 +431,19 @@ This SaaS template uses five product development roles:
      changes coming out of an approved growth hypothesis are
      implemented by Builder, not Grower.
 
+6. Reviewer
+
+   - Evaluate implementation quality and governance.
+
+   - Review ONLY. Reviewer MUST NOT implement code or make product
+     decisions.
+
+   - Follows the 5-phase gated workflow defined in
+     `.claude/agents/reviewer.md`:
+     Analyze → Review Plan → Human Approval → Review Execution →
+     Verification.
+     Reviewer stops at every phase gate.
+
 ## Standard Workflow
 
 Before implementing a new feature:
@@ -452,6 +465,10 @@ Before implementing a new feature:
 6. Use grower before deciding the next feature
    (approve its plan in docs/growth-plan.md before any experiment
    starts or work is handed to Builder).
+
+7. Use reviewer before release/merge
+   (approve its plan in docs/review-plan.md; ship only when the
+   Release Recommendation is APPROVED or APPROVED WITH RISKS).
 
 Do not build features only because they are easy.
 
