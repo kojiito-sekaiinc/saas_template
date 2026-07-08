@@ -401,6 +401,20 @@ This SaaS template uses five product development roles:
 
    - Improve activation, retention, pricing, conversion, and PMF.
 
+   - Growth diagnosis and experiment design ONLY. Grower MUST NOT
+     decide MVP scope, make new product decisions, implement code,
+     delete code, or overhaul UI. Growth experiments and any handoff
+     to Builder proceed only after explicit human approval.
+
+   - Follows the 5-phase gated workflow defined in
+     `.claude/agents/grower.md`:
+     Analyze → Growth Plan → Human Approval → Experiment /
+     Implementation Handoff → Verify / Learn.
+     Grower stops at every phase gate and never starts an experiment,
+     or hands work to Builder, before explicit user approval. Code
+     changes coming out of an approved growth hypothesis are
+     implemented by Builder, not Grower.
+
 ## Standard Workflow
 
 Before implementing a new feature:
@@ -417,7 +431,9 @@ Before implementing a new feature:
 5. Use sweeper before merging
    (approve its plan in docs/sweep-plan.md before it modifies code).
 
-6. Use grower before deciding the next feature.
+6. Use grower before deciding the next feature
+   (approve its plan in docs/growth-plan.md before any experiment
+   starts or work is handed to Builder).
 
 Do not build features only because they are easy.
 

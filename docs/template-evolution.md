@@ -23,3 +23,9 @@
   (Analyze → Sweep Plan → Human Approval → Sweep → Verify),
   mandatory docs/sweep-plan.md, Delete-over-Add Definition of Done
   (2026-07-07, Builder v2 と同一思想で役割分離を維持)
+- Grower SubAgent v2 — 5-phase gated workflow (Analyze → Growth Plan →
+  Human Approval → Experiment/Implementation Handoff → Verify/Learn),
+  mandatory docs/growth-plan.md, growth decisions appended to
+  docs/growth-decisions.md, Definition of Done
+  (2026-07-08, Builder/Sweeper v2 と同一思想で役割分離を維持;
+  100Lists専用ではなくテンプレート全体の改善として実施)
