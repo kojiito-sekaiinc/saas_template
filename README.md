@@ -1,50 +1,300 @@
 # Django SaaS Subscription Template
 
-> Production-ready Django SaaS Template for AI-assisted development.
+> AI Agent-Driven SaaS Template — Django + Stripe + マルチエージェント開発ワークフロー
 
-**v1.0.0** — メール認証・7日間無料トライアル・Stripe サブスクリプション・
-Webhook ベースの課金同期・ペイウォールを備えた、複製して使う Django テンプレート。
-
----
-
-## 1. Overview
-
-### 目的
-
-このリポジトリは一回きりのアプリケーションではなく、**再利用可能な SaaS テンプレート**です。
-
-- 新サービスを **約2週間サイクル** でリリースする
-- **有料サブスクリプション** で実需要を検証する
-- 複製しても壊れない、安全で安定した土台を維持する
-
-### 対象ユーザー
-
-- 個人開発で SaaS を作りたいエンジニア
-- Stripe 課金を最短で実装したい方
-- Claude Code など AI エージェントを使った開発を前提にしたい方
-
-### v1.0.0 の概要
-
-認証（サインアップ / ログイン / パスワードリセット）、Stripe サブスクリプション課金、
-ペイウォール、デプロイ前設定チェック、CI（unit + E2E）、AI 開発ワークフローまでを含む
-初の production-ready リリースです。112 件の pytest と Playwright E2E が CI で常時実行されます。
-
-### Philosophy
-
-This template is designed to help individual developers build production-ready
-SaaS applications with AI-assisted development.
-
-It prioritizes:
-
-- **Simplicity** — 単一プラン・固定スタック・「迷ったら追加より削除」
-- **Production readiness** — fail-closed なデフォルト設定・デプロイ前チェック・CI
-- **Fail-closed security** — Webhook を課金状態の単一の正とし、疑わしいイベントは拒否
-- **Incremental improvement** — 小さな目的別コミットとレビュー駆動の改善
-- **Reusable architecture** — 新機能は `apps/app` のみ。コアは複製後も変更しない
+**v1.0.0+** — 認証・Stripe サブスクリプション・ペイウォールに加え、
+Product Strategist / Builder / Sweeper / Grower / Reviewer という
+5つの SubAgent と、それらを統合する Agent Orchestrator を備えた、
+「意思決定・実装・品質保証・簡素化・成長施策」を AI エージェントに
+委譲しながら複製して使う Django テンプレートです。
 
 ---
 
-## Architecture
+## 1. このリポジトリについて
+
+このリポジトリは、単なる「Django + Stripe の SaaS テンプレート」ではありません。
+
+**AI Agent-Driven SaaS Template** として、以下を提供します。
+
+- **Django + Stripe** による本番運用可能な SaaS の土台
+  （認証・サブスクリプション課金・ペイウォール・CI）
+- **AI Agent Workflow** による、プロダクト意思決定から実装・品質レビュー・
+  簡素化・成長施策までの一連の開発プロセス
+
+「何を作るか」「実装してよいか」「リリースしてよいか」「何を削るべきか」
+「どう伸ばすか」を、それぞれ専門化された SubAgent が担当し、各ステップで
+人間の承認を必ず挟みます。
+
+新しい SaaS をこのテンプレートから立ち上げる際は、コードだけでなく
+この開発プロセスごと複製されることを想定しています。
+
+---
+
+## 2. このテンプレートの思想
+
+このテンプレートは、次の原則の上に成り立っています。
+
+- **Humans make decisions.** — 何を作るか、リリースしてよいかは常に人間が決める。
+  AI は提案・実行はするが、最終判断はしない。
+- **Agents own responsibilities.** — 各 SubAgent は1つの責務だけを持つ
+  （決定 / 実装 / 品質レビュー / 簡素化 / 成長）。他の役割を代行しない。
+- **Artifacts are the source of truth.** — Agent 間の連携は口頭指示ではなく、
+  `docs/` 配下に保存されたファイル（成果物）を介して行われる。
+- **Human approval at every gate.** — 各 Agent は自分の作業計画（Plan）と
+  実行結果の両方で必ず停止し、明示的な承認を待つ。沈黙・曖昧な返答・質問は
+  承認とみなさない。
+- **Single Responsibility.** — Builder は実装のみ、Sweeper は簡素化のみ、
+  Grower は成長施策の立案のみ、Reviewer はレビューのみ、Product Strategist
+  は意思決定のみを行う。
+- **Artifact-driven workflow.** — 1 Agent = 複数の Phase、各 Phase の終わりに
+  必ず STOP し、次の Phase には進まない。
+
+詳細は [docs/agent-workflow.md](docs/agent-workflow.md) を参照してください。
+
+---
+
+## 3. Product Development Roles
+
+| Role | Responsibility |
+|------|---------------|
+| [Product Strategist](.claude/agents/product-strategist.md) | Decide what to build |
+| [Builder](.claude/agents/builder.md) | Implement |
+| [Reviewer](.claude/agents/reviewer.md) | Review quality |
+| [Sweeper](.claude/agents/sweeper.md) | Simplify |
+| [Grower](.claude/agents/grower.md) | Improve value |
+| Agent Orchestrator（[docs/agent-workflow.md](docs/agent-workflow.md)） | Coordinate agents |
+
+各 Agent の詳細（Purpose / Responsibilities / Inputs / Outputs /
+Typical Usage / Common Mistakes）は **[docs/subagents.md](docs/subagents.md)**
+にまとめています。
+
+---
+
+## 4. 標準開発フロー
+
+```
+Idea
+  ↓
+Product Strategist
+  ↓
+Builder
+  ↓
+Reviewer
+  ↓
+Sweeper
+  ↓
+Grower
+  ↓
+Release
+```
+
+```mermaid
+flowchart TD
+    Idea[Idea] --> PS[Product Strategist]
+    PS --> B[Builder]
+    B --> R[Reviewer]
+    R --> S[Sweeper]
+    S --> G[Grower]
+    G --> Rel[Release]
+    R -. CHANGES REQUIRED / BLOCKED .-> B
+    G -. Builder Handoff Items .-> B
+```
+
+Reviewer が CHANGES REQUIRED / BLOCKED と判定した場合、または Grower が
+実装を伴う成長施策を承認した場合は、Builder に差し戻されて再度 Reviewer を
+通過します。このフロー全体の詳細は [docs/agent-workflow.md](docs/agent-workflow.md)
+が正とします。
+
+---
+
+## 5. 成果物（Artifacts）
+
+| File | Owner |
+|------|-------|
+| `docs/product-definition.md` | Product Strategist |
+| `docs/product-decisions.md` | Product Strategist |
+| `docs/implementation-plan.md` | Builder |
+| `docs/review-plan.md` | Reviewer |
+| `docs/review-decisions.md` | Reviewer |
+| `docs/sweep-plan.md` | Sweeper |
+| `docs/growth-plan.md` | Grower |
+| `docs/growth-decisions.md` | Grower |
+| `docs/agent-workflow.md` | Agent Orchestrator |
+
+これらのファイルは各 Agent の該当 Phase で初めて生成されます（あらかじめ
+空ファイルとして用意されているわけではありません）。`*-decisions.md` の
+3ファイルは追記専用（append-only）の SSOT です。
+
+---
+
+## 6. 新しい機能を開発する方法
+
+1. **Product Strategist** — 「何を作るか」を決める。`docs/product-definition.md`
+   を生成し、人間が承認するまで次に進まない。
+2. **Builder** — 承認された `docs/product-definition.md` を元に実装する。
+   `docs/implementation-plan.md` を人間が承認してから初めてコードを書く。
+3. **Reviewer** — 実装をレビューする。`docs/review-plan.md` を人間が承認
+   してからレビューを実行し、Release Recommendation を出す。
+4. **Sweeper** — 不要なコード・重複・複雑さを削る。`docs/sweep-plan.md` を
+   人間が承認してから初めてコードを変更する。
+5. **Grower** — 活性化・定着・転換率などの成長施策を立案する。
+   `docs/growth-plan.md` を人間が承認してから、施策の実行または Builder への
+   引き継ぎを行う。
+
+**承認が必要になるタイミング**: 各 Agent は自分の「計画（Plan）」を出した
+直後と、「実行結果」を出した直後の、少なくとも2回、必ず停止して人間の承認を
+待ちます（詳細は次章 [Human Approval Rules](#7-human-approval-rules)）。
+承認なしに次のフェーズへは進みません。
+
+---
+
+## 7. Human Approval Rules
+
+すべての SubAgent は、次の5フェーズ構造で動作します。
+
+```
+Phase 1 (調査・分析)
+  ↓
+Phase 2 (計画の作成)
+  ↓
+STOP → 人間の承認
+  ↓
+Phase 3 は人間の承認そのもの
+  ↓
+Phase 4 (承認された範囲の実行)
+  ↓
+STOP → 人間の承認
+  ↓
+Phase 5 (検証・記録・Definition of Done)
+```
+
+- **1 invocation = 1 phase** — Agent は1回の呼び出しで1つのフェーズしか
+  実行しません。
+- **STOP は省略できません** — 自信があっても、次のフェーズには絶対に自動
+  継続しません。
+- **承認は明示的なものだけが有効です** — 「承認」「進めて」などの明確な
+  意思表示が必要で、沈黙・曖昧な返答・質問は承認とみなされません。
+- **部分承認が可能です** — 「A だけ承認」「B は保留」のように、計画の一部
+  だけを承認して進めることができます。
+- **API が切断されても被害は最小限です** — 各フェーズの終わりに必ず状態が
+  保存されるため、失われるのは最大でも1フェーズ分だけです。
+
+---
+
+## 8. Repository Structure
+
+```
+├── apps/
+│   ├── accounts/     # 認証・パスワードリセット・Profile（free_until）
+│   ├── billing/      # Stripe Checkout / Webhook / Portal / BillingProfile / sync
+│   ├── app/          # サービス固有機能（新機能は必ずここだけに追加）
+│   └── common/       # ペイウォールミドルウェア・check_deploy_config・共有ユーティリティ
+├── config/           # settings / settings_test / urls / wsgi
+├── templates/        # HTML テンプレート（旧系統: accounts / billing / home）
+├── ui/               # Sekai UI System（layouts / components、新規ページはこちら）
+├── static/           # CSS / 静的ファイル
+├── tests/e2e/        # Playwright E2E（既定の pytest からは分離）
+├── docs/             # プロダクト・運用・エージェント関連ドキュメント（次章参照）
+├── scripts/
+│   ├── checks/       # quick_check.sh
+│   └── hooks/        # Claude Code 用フック
+└── .claude/
+    ├── agents/       # SubAgent定義（product-strategist / builder / sweeper / grower / reviewer / code-reviewer / prototyper）
+    └── skills/       # 専門スキル定義
+```
+
+**原則: 新サービスの機能追加は `apps/app/` のみ。** accounts / billing /
+common はテンプレートの中核であり、複製後も変更しないことを前提にしています
+（詳細は [docs/BOUNDARIES.md](docs/BOUNDARIES.md)）。
+
+---
+
+## 9. Documentation Index
+
+### Agent Workflow
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/agent-workflow.md](docs/agent-workflow.md) | Agent Orchestrator。実行順序・成果物の受け渡し・標準フロー・リリース条件の SSOT |
+| [docs/subagents.md](docs/subagents.md) | 各 SubAgent の Purpose / Responsibilities / Inputs / Outputs / Typical Usage / Common Mistakes |
+| [docs/quick-start.md](docs/quick-start.md) | ユースケース別（新機能追加・簡素化・成長施策・リリース）のエージェント利用ガイド |
+
+### プロダクト管理
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/product-context.md](docs/product-context.md) | プロダクトの前提（ビジョン・対象ユーザー・課金戦略） |
+| [docs/mvp-scope.md](docs/mvp-scope.md) | MVP スコープ |
+| [docs/vision.md](docs/vision.md) | 長期ビジョン |
+| [docs/pricing.md](docs/pricing.md) | 価格戦略 |
+| [docs/roadmap.md](docs/roadmap.md) | ロードマップ |
+| [docs/metrics.md](docs/metrics.md) | 主要指標 |
+| [docs/experiments.md](docs/experiments.md) | 実験ログ |
+| [docs/user-feedback.md](docs/user-feedback.md) | ユーザーフィードバック |
+| [docs/growth-decisions.md](docs/growth-decisions.md) | Grower の意思決定ログ（SSOT） |
+| docs/product-definition.md / docs/product-decisions.md（生成物） | Product Strategist の成果物（SSOT） |
+| docs/implementation-plan.md（生成物） | Builder の成果物 |
+| docs/review-plan.md / docs/review-decisions.md（生成物） | Reviewer の成果物（SSOT） |
+| docs/sweep-plan.md（生成物） | Sweeper の成果物 |
+| docs/growth-plan.md（生成物） | Grower の成果物 |
+
+### 運用・アーキテクチャ
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | 運用手順・障害対応・セキュリティ |
+| [docs/TEMPLATE_CHECKLIST.md](docs/TEMPLATE_CHECKLIST.md) | 新 SaaS を2週間で立ち上げるチェックリスト |
+| [docs/SETUP_STRIPE.md](docs/SETUP_STRIPE.md) | Stripe セットアップ |
+| [docs/sync_billing_from_stripe.md](docs/sync_billing_from_stripe.md) | 課金状態復旧コマンド |
+| [docs/UI_SYSTEM_UPDATE_RUNBOOK.md](docs/UI_SYSTEM_UPDATE_RUNBOOK.md) | UI システム更新手順 |
+| [docs/architecture.md](docs/architecture.md) | アーキテクチャ概要 |
+| [docs/BOUNDARIES.md](docs/BOUNDARIES.md) | 変更してよい領域・いけない領域 |
+| [docs/Guidelines.md](docs/Guidelines.md) | 日常の開発ルール |
+| [docs/Workflows.md](docs/Workflows.md) | コミット規律・Spec→Code→Review ワークフロー |
+| [docs/CodexReviewPrompt.md](docs/CodexReviewPrompt.md) | Codex レビュー用プロンプト |
+| [docs/template-evolution.md](docs/template-evolution.md) | テンプレート自体の改善履歴・提案 |
+| [docs/adr/](docs/adr/) | Architecture Decision Records |
+| [docs/ai-context/](docs/ai-context/) | AI 開発用コンテキスト |
+
+---
+
+## 10. Quick Start（ユースケース別）
+
+### 新機能追加
+
+```
+Product Strategist → Builder → Reviewer → (Sweeper) → (Grower)
+```
+`docs/product-definition.md` の承認から始めます。詳細は
+[docs/quick-start.md](docs/quick-start.md) の「新機能開発フロー」。
+
+### コード簡素化
+
+```
+Sweeper → Reviewer
+```
+不要なコード・重複・複雑さを削る際に使います。詳細は
+[docs/quick-start.md](docs/quick-start.md) の「簡素化フロー」。
+
+### 成長施策検討
+
+```
+Grower → (Builder → Reviewer)
+```
+活性化・定着・転換率・価格の改善仮説を立てる際に使います。詳細は
+[docs/quick-start.md](docs/quick-start.md) の「成長施策フロー」。
+
+### リリース前レビュー
+
+```
+Reviewer
+```
+実装品質・アーキテクチャ・セキュリティ・ガバナンス・リリース判定を行います。
+詳細は [docs/quick-start.md](docs/quick-start.md) の「リリースフロー」。
+
+---
+
+## 11. System Architecture
 
 ```mermaid
 flowchart TD
@@ -66,7 +316,7 @@ flowchart TD
 
 ---
 
-## 2. Features
+## 12. Features
 
 ### Authentication
 
@@ -101,22 +351,9 @@ flowchart TD
   Stripe キー / EMAIL backend / 送信元アドレスの10項目をデプロイ前に検証
 - **quick_check.sh** — compileall + Django check + pytest を一括実行するローカル品質ゲート
 
-### AI Development
-
-- **Claude Code 前提のワークフロー** — 実装は Claude Code、レビューは code-reviewer
-  subagent / Codex という役割分担を [CLAUDE.md](CLAUDE.md) で定義
-- **CLAUDE.md** — 技術スタック固定・課金ルール・禁止事項・Explore → Plan → Implement
-  ワークフローなど、AI が守るべき最上位ルールを明文化
-- **SubAgent ワークフロー** — `.claude/agents/` に6種の役割別エージェント定義
-  （product-strategist / prototyper / builder / sweeper / grower / code-reviewer）
-- **code-reviewer** — 品質・セキュリティ・保守性を fail-closed 原則に照らして
-  レビューする専用エージェント。v1.0.0 のリリース判定にも使用
-- **スキル定義** — `.claude/skills/` に Django SaaS / Stripe 課金 / テンプレート指向開発の
-  専門スキルを配置
-
 ---
 
-## 3. Technology Stack
+## 13. Technology Stack
 
 | 分類 | 技術 |
 |---|---|
@@ -132,32 +369,7 @@ flowchart TD
 
 ---
 
-## 4. Project Structure
-
-```
-├── apps/
-│   ├── accounts/     # 認証・パスワードリセット・Profile（free_until）
-│   ├── billing/      # Stripe Checkout / Webhook / Portal / BillingProfile / sync
-│   ├── app/          # サービス固有機能（新機能は必ずここだけに追加）
-│   └── common/       # ペイウォールミドルウェア・check_deploy_config・共有ユーティリティ
-├── config/           # settings / settings_test / urls / wsgi
-├── templates/        # HTML テンプレート（旧系統: accounts / billing / home）
-├── ui/               # Sekai UI System（layouts / components、新規ページはこちら）
-├── static/           # CSS / 静的ファイル
-├── tests/e2e/        # Playwright E2E（既定の pytest からは分離）
-├── docs/             # RUNBOOK・チェックリスト・設計ドキュメント
-├── scripts/
-│   ├── checks/       # quick_check.sh
-│   └── hooks/        # Claude Code 用フック
-└── .claude/          # agents / skills（AI 開発ワークフロー定義）
-```
-
-**原則: 新サービスの機能追加は `apps/app/` のみ。** accounts / billing / common は
-テンプレートの中核であり、複製後も変更しないことを前提にしています。
-
----
-
-## 5. Quick Start
+## 14. Local Development Setup
 
 30分以内にローカルで起動できます（Stripe キーはダミーで可）。
 
@@ -204,27 +416,7 @@ runserver のターミナルに本文（リンク含む）が出力されます�
 
 ---
 
-## 6. Development Workflow
-
-このテンプレートは AI エージェントによる実装を前提に、次のループを推奨します。
-
-1. **課題定義** — product-strategist subagent で「何を作るか / 作らないか」を決め、
-   必要なら `docs/mvp-scope.md` を更新
-2. **実装（Claude Code）** — 非自明な変更は Explore → Plan → Implement の
-   3フェーズ（[CLAUDE.md](CLAUDE.md) 10-bis 参照）。prototyper → builder の順で固める
-3. **レビュー** — code-reviewer subagent で品質・セキュリティ・fail-closed をレビュー。
-   マージ前に sweeper で不要な複雑さを削る
-4. **pytest** — `pytest` で 112 件 + 追加分がグリーンであることを確認
-5. **Playwright** — UI 変更時は `pytest tests/e2e` を必ず通す
-6. **GitHub Actions** — push で test / e2e / デプロイ設定チェックが自動実行
-7. **Release** — 1 commit = 1 purpose で分割コミットし、タグ + GitHub Release を作成
-
-判断に迷ったら **「追加より削除」**。詳細は `docs/Guidelines.md` と
-`.github/pull_request_template.md` を参照してください。
-
----
-
-## 7. Quality Gates
+## 15. Quality Gates
 
 テストランナーは **pytest** に統一されています（`python manage.py test` は使用しない）。
 テストは `config.settings_test` を使うため **`.env` なしで実行できます**。
@@ -273,7 +465,7 @@ ERROR が1件でもあると exit(1) になります。GitHub Actions では pus
 
 ---
 
-## 8. Environment Variables
+## 16. Environment Variables
 
 `.env.example` をコピーして使います。「必須」は本番デプロイ時の要否です。
 
@@ -300,11 +492,11 @@ ERROR が1件でもあると exit(1) になります。GitHub Actions では pus
 
 ---
 
-## 9. Deployment
+## 17. Deployment
 
 Railway を前提としています。
 
-1. **GitHub リポジトリを接続** し、環境変数を設定（[Environment Variables](#8-environment-variables) 参照）
+1. **GitHub リポジトリを接続** し、環境変数を設定（[Environment Variables](#16-environment-variables) 参照）
    - `SECRET_KEY` は必ず本番用に新規生成
    - `SITE_URL` は本番ドメイン（https）に設定
    - `STRIPE_*` は本番キーに切り替え
@@ -338,7 +530,7 @@ Railway を前提としています。
 
 ---
 
-## 10. Creating a New SaaS
+## 18. Creating a New SaaS
 
 このテンプレートから新サービスを立ち上げる手順の完全版は
 **[docs/TEMPLATE_CHECKLIST.md](docs/TEMPLATE_CHECKLIST.md)**（2週間リリース手順）にあります。要点:
@@ -354,31 +546,13 @@ Railway を前提としています。
 5. **メール設定** — 本番 SMTP（SendGrid / Amazon SES / Resend 等）と
    `DEFAULT_FROM_EMAIL` を独自ドメインで設定
 6. **機能実装** — 新機能は `apps/app/` のみに追加。
-   課金・認証・ペイウォールのコアは変更しない
+   課金・認証・ペイウォールのコアは変更しない。開発は
+   [Product Development Roles](#3-product-development-roles) の
+   SubAgent フローに従う
 
 ---
 
-## 11. Documentation
-
-| ドキュメント | 内容 |
-|---|---|
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | 運用手順・障害対応・セキュリティ |
-| [docs/TEMPLATE_CHECKLIST.md](docs/TEMPLATE_CHECKLIST.md) | 新 SaaS を2週間で立ち上げるチェックリスト |
-| [docs/SETUP_STRIPE.md](docs/SETUP_STRIPE.md) | Stripe セットアップ（アカウント分離方針含む） |
-| [docs/sync_billing_from_stripe.md](docs/sync_billing_from_stripe.md) | 課金状態復旧コマンドの使い方 |
-| [docs/UI_SYSTEM_UPDATE_RUNBOOK.md](docs/UI_SYSTEM_UPDATE_RUNBOOK.md) | UI システム（ui/）更新手順・テンプレート解決の注意点 |
-| [docs/architecture.md](docs/architecture.md) | アーキテクチャ概要 |
-| [docs/BOUNDARIES.md](docs/BOUNDARIES.md) | 変更してよい領域・いけない領域の境界 |
-| [docs/Guidelines.md](docs/Guidelines.md) | 日常の開発ルール |
-| [docs/Workflows.md](docs/Workflows.md) | 開発ワークフロー詳細 |
-| [docs/CodexReviewPrompt.md](docs/CodexReviewPrompt.md) | Codex レビュー用プロンプト |
-| [docs/adr/](docs/adr/) | Architecture Decision Records |
-| [docs/ai-context/](docs/ai-context/) | AI 開発用コンテキスト |
-| プロダクト管理系 | [vision](docs/vision.md) / [mvp-scope](docs/mvp-scope.md) / [pricing](docs/pricing.md) / [roadmap](docs/roadmap.md) / [metrics](docs/metrics.md) / [experiments](docs/experiments.md) / [growth-decisions](docs/growth-decisions.md) / [product-context](docs/product-context.md) / [user-feedback](docs/user-feedback.md) |
-
----
-
-## 12. Roadmap
+## 19. Roadmap
 
 v1.1 候補（v1.0.0 リリースレビューでのフォローアップ合意事項 + 既知の制約）:
 
@@ -393,7 +567,7 @@ v1.1 候補（v1.0.0 リリースレビューでのフォローアップ合意�
 
 ---
 
-## 13. License
+## 20. License
 
 現時点で LICENSE ファイルは同梱していません（プライベートテンプレート、All rights reserved）。
 テンプレートとして公開・配布する場合は、利用条件を定めた LICENSE の追加を検討してください。

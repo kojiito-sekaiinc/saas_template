@@ -258,3 +258,17 @@ Sweeper per the Reviewer role's own handoff guidance.
 | 課金/Paywallモデルの変更提案 | Product Strategist（提案のみ。適用には CLAUDE.md Section 4-bis の承認が必要） |
 | セキュリティ・アーキテクチャ懸念の点検 | Reviewer |
 | ユーザーフィードバックの整理 | Grower |
+
+## Typical Scenarios
+
+### 新機能追加
+Product Strategist → Builder → Reviewer
+
+### コード簡素化
+Sweeper → Reviewer
+
+### 成長施策
+Grower → Builder → Reviewer
+
+### 価格変更
+Product Strategist → Section 4-bis approval → Builder → Reviewer
