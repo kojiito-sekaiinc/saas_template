@@ -4,9 +4,9 @@
 
 This document is the Single Source of Truth (SSOT) for how the
 template's product development SubAgents — Product Strategist,
-Builder, Sweeper, Grower, and Reviewer — are used together: in what
-order, with what artifacts handed between them, and under what
-conditions a release is safe to ship.
+Builder, Sweeper, Grower, Reviewer, and Template Sync — are used
+together: in what order, with what artifacts handed between them, and
+under what conditions a release is safe to ship.
 
 The Agent Orchestrator described here is **not a SubAgent**. It makes
 no product decisions, writes no code, performs no review, and designs
@@ -137,6 +137,30 @@ decision-maker for the actual release/merge decision; any CHANGES
 REQUIRED or BLOCKED finding → back to **Builder** or **Sweeper**
 (whichever owns the affected area) for a new cycle.
 
+### Template Sync
+
+**責務**: Template Drift Management ONLY — detects, classifies
+(Apply / Preserve / Conflict / Ignore), and syncs differences between
+the template and a derived app. Never makes product decisions, never
+implements features, never overwrites app-specific files without
+approval.
+
+**入力**: the template repository (its `main` branch or a specified
+path, pinned to a Commit SHA during Phase 1), plus the derived app's
+current state — CLAUDE.md, docs/agent-workflow.md,
+docs/template-evolution.md, `.claude/agents/**`, README.md, `docs/**`,
+`apps/**`, `templates/**`, `tests/**`, CI config, billing/paywall
+code.
+
+**出力**: docs/template-sync-plan.md (Phase 2), a Sync Execution
+result covering only approved Apply items (Phase 4), a new
+docs/template-sync-decisions.md entry (Phase 5).
+
+**次に渡す成果物**: the synced codebase and
+docs/template-sync-decisions.md → the human for final confirmation
+(and to **Reviewer**, if a full quality/governance pass is also
+wanted before release).
+
 ## Standard Development Flow
 
 ```
@@ -175,6 +199,39 @@ CHANGES REQUIRED or BLOCKED, and Grower sends approved Builder Handoff
 Items back to Builder when a growth hypothesis needs a code change.
 Both loops re-enter at Builder and must pass through Reviewer again
 before Release.
+
+## Template Lifecycle Flow
+
+This is a separate, orthogonal flow from the Standard Development
+Flow above. The Standard Development Flow is how a single derived app
+goes from idea to release; the Template Lifecycle Flow is how an
+improvement to the template itself reaches an already-existing
+derived app.
+
+```
+Template Maintainer（将来追加予定。現在はテンプレートオーナーが担当）
+  ↓
+Template Release
+  ↓
+Template Sync
+  ↓
+Derived App
+```
+
+```mermaid
+flowchart TD
+    TM["Template Maintainer (not yet implemented — currently the template owner)"] --> TR[Template Release]
+    TR --> TS[Template Sync]
+    TS --> DA[Derived App]
+```
+
+**Template Maintainer** is not yet implemented as a SubAgent — today
+a human template owner performs this role manually (curating
+`docs/template-evolution.md`'s `## Proposed` / `## Accepted` /
+`## Implemented` sections and cutting template releases). **Template
+Sync** is the only step in this flow implemented as a SubAgent today;
+it is what pulls an already-released template update into a specific
+derived app while classifying and protecting that app's own drift.
 
 ## Artifact Flow
 
@@ -258,6 +315,9 @@ Sweeper per the Reviewer role's own handoff guidance.
 | 課金/Paywallモデルの変更提案 | Product Strategist（提案のみ。適用には CLAUDE.md Section 4-bis の承認が必要） |
 | セキュリティ・アーキテクチャ懸念の点検 | Reviewer |
 | ユーザーフィードバックの整理 | Grower |
+| 最新テンプレートを既存アプリへ反映したい | Template Sync |
+| テンプレートとの差分を分類したい | Template Sync |
+| 既存アプリのProduct docsを守りながら同期したい | Template Sync |
 
 ## Typical Scenarios
 

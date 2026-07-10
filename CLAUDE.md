@@ -353,7 +353,7 @@ Before completing any task, you MUST verify:
 
 ## Product Development Roles
 
-This SaaS template uses six product development roles:
+This SaaS template uses seven product development roles:
 
 1. Product Strategist
 
@@ -444,6 +444,22 @@ This SaaS template uses six product development roles:
      Verification.
      Reviewer stops at every phase gate.
 
+7. Template Sync
+
+   - Reconcile template drift between the SaaS template and derived
+     apps.
+
+   - Template Drift Management ONLY.
+
+   - Must not make product decisions, implement features, or
+     overwrite app-specific files without approval.
+
+   - Follows the 5-phase gated workflow:
+     Analyze → Sync Plan → Human Approval → Sync Execution →
+     Verification.
+
+   - Stops at every phase gate.
+
 ## Standard Workflow
 
 Before implementing a new feature:
@@ -471,6 +487,9 @@ Before implementing a new feature:
    Release Recommendation is APPROVED or APPROVED WITH RISKS).
 
 8. Follow docs/agent-workflow.md for multi-agent coordination.
+
+9. Use template-sync when applying template updates to an existing
+   derived app.
 
 Do not build features only because they are easy.
 

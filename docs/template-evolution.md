@@ -51,3 +51,11 @@
   boundaries, standard development flow, and release coordination
   across Product Strategist, Builder, Sweeper, Grower, and Reviewer
   (2026-07-08)
+- Template Sync Agent v1 — 5-phase gated workflow (Analyze → Sync
+  Plan → Human Approval → Sync Execution → Verification), Template
+  Drift Management ONLY, Apply / Preserve / Conflict / Ignore
+  classification, mandatory docs/template-sync-plan.md,
+  template-sync decision log (docs/template-sync-decisions.md),
+  protects derived app-specific files and approved billing
+  strategies
+  (2026-07-10, 100Lists Template Sync作業の知見をテンプレートへ還元)
