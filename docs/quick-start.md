@@ -66,3 +66,23 @@
    の全項目を確認する。
 4. 問題なければ Phase 5 (Verification) を実行し、
    `docs/review-decisions.md` に記録した上でリリースする。
+
+---
+
+## 派生アプリへのテンプレート更新反映フロー
+
+1. **Template Sync** を起動し Phase 1 (Analyze) を実行する。
+   Template Drift Analysis Report（Template Source / Drift Summary /
+   Apply・Preserve・Conflict・Ignore Candidates）を確認する。
+2. Phase 2 (Sync Plan) を実行し、`docs/template-sync-plan.md` を
+   承認する（部分承認可。例:「Agent定義だけApply」「READMEは保留」
+   「billing関連ConflictはPreserve」）。
+3. Phase 4 (Sync Execution) を実行する。承認された Apply 項目のみ
+   同期され、ローカルコミットまで作成される（push はまだ行われない）。
+   同期後チェックリスト（apps/app・templates/app・tests/e2e・product系
+   docs が未変更か、承認済み Billing Strategy が残存しているか）を
+   確認する。
+4. push を承認する。
+5. Phase 5 (Verification) を実行する。push・GitHub Actions の結果を
+   `docs/template-sync-decisions.md` に記録し、Definition of Done を
+   確認する。

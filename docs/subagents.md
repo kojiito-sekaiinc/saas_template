@@ -172,3 +172,38 @@ Builder Handoff Brief）, docs/growth-decisions.md の新規エントリ。
   しまう（Orchestrator は判断しない）
 - docs/agent-workflow.md を実際の Agent 運用と乖離させたまま放置して
   しまう
+
+---
+
+## Template Sync
+
+**Purpose**: テンプレート本体と派生アプリの差分（Template Drift）を
+安全に管理する。Template Drift Management ONLY — 製品判断・新機能実装・
+リファクタリング・成長施策・レビュー代行・テンプレート自体の改善提案は
+行わない。
+
+**Responsibilities**: Template Drift Analysis、Apply / Preserve /
+Conflict / Ignore への分類、Sync Plan 作成、派生アプリ固有実装・
+承認済み課金戦略の保護、同期後の検証、同期履歴の記録。
+
+**Inputs**: テンプレート本体（Analyze フェーズで Repository / Branch /
+Commit SHA / Fetch Time を固定）、CLAUDE.md, docs/agent-workflow.md,
+docs/template-evolution.md, `.claude/agents/**`, README.md, docs/**,
+apps/**, templates/**, tests/**, CI設定, billing/paywall 関連コード。
+
+**Outputs**: docs/template-sync-plan.md, Sync Execution 結果
+（承認済み Apply 項目のみ）, docs/template-sync-decisions.md の新規
+エントリ。
+
+**Typical Usage**: テンプレート本体が更新され、既存の派生アプリへ
+その更新を安全に取り込みたいときに呼ぶ。
+
+**Common Mistakes**:
+- Preserve 対象（apps/app、templates/app、tests/e2e、Product Docs、
+  承認済み Freemium など）を無承認で変更してしまう
+- Conflict 対象（billing/paywall、middleware.py、settings.py、CI
+  設定など）を人間の判断なしに Apply してしまう
+- Analyze フェーズで固定した Commit SHA ではなく、動く `main`
+  ブランチを Sync Execution で再取得してしまう
+- Sync Execution フェーズで承認なく `git push` してしまう
+  （push は Verification フェーズで、明示的な承認がある場合のみ）

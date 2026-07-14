@@ -3,10 +3,11 @@
 > AI Agent-Driven SaaS Template — Django + Stripe + マルチエージェント開発ワークフロー
 
 **v1.0.0+** — 認証・Stripe サブスクリプション・ペイウォールに加え、
-Product Strategist / Builder / Sweeper / Grower / Reviewer という
-5つの SubAgent と、それらを統合する Agent Orchestrator を備えた、
-「意思決定・実装・品質保証・簡素化・成長施策」を AI エージェントに
-委譲しながら複製して使う Django テンプレートです。
+Product Strategist / Builder / Sweeper / Grower / Reviewer /
+Template Sync という6つの SubAgent と、それらを統合する Agent
+Orchestrator を備えた、「意思決定・実装・品質保証・簡素化・成長施策・
+テンプレート同期」を AI エージェントに委譲しながら複製して使う Django
+テンプレートです。
 
 ---
 
@@ -62,6 +63,7 @@ Product Strategist / Builder / Sweeper / Grower / Reviewer という
 | [Reviewer](.claude/agents/reviewer.md) | Review quality |
 | [Sweeper](.claude/agents/sweeper.md) | Simplify |
 | [Grower](.claude/agents/grower.md) | Improve value |
+| [Template Sync](.claude/agents/template-sync.md) | Reconcile template drift |
 | Agent Orchestrator（[docs/agent-workflow.md](docs/agent-workflow.md)） | Coordinate agents |
 
 各 Agent の詳細（Purpose / Responsibilities / Inputs / Outputs /
@@ -199,7 +201,7 @@ Phase 5 (検証・記録・Definition of Done)
 │   ├── checks/       # quick_check.sh
 │   └── hooks/        # Claude Code 用フック
 └── .claude/
-    ├── agents/       # SubAgent定義（product-strategist / builder / sweeper / grower / reviewer / code-reviewer / prototyper）
+    ├── agents/       # SubAgent定義（product-strategist / builder / sweeper / grower / reviewer / template-sync / code-reviewer / prototyper）
     └── skills/       # 専門スキル定義
 ```
 
@@ -217,7 +219,25 @@ common はテンプレートの中核であり、複製後も変更しないこ�
 |---|---|
 | [docs/agent-workflow.md](docs/agent-workflow.md) | Agent Orchestrator。実行順序・成果物の受け渡し・標準フロー・リリース条件の SSOT |
 | [docs/subagents.md](docs/subagents.md) | 各 SubAgent の Purpose / Responsibilities / Inputs / Outputs / Typical Usage / Common Mistakes |
-| [docs/quick-start.md](docs/quick-start.md) | ユースケース別（新機能追加・簡素化・成長施策・リリース）のエージェント利用ガイド |
+| [docs/quick-start.md](docs/quick-start.md) | ユースケース別（新機能追加・簡素化・成長施策・リリース・派生アプリ更新）のエージェント利用ガイド |
+
+### Agent Definitions
+
+`.claude/agents/` 配下の SubAgent 定義ファイル一覧です（[Product
+Development Roles](#3-product-development-roles) と対応する
+ゲート型 5フェーズ SubAgent 6件）。**Agent Orchestrator はここに
+含まれません** — docs/agent-workflow.md 自身が明記する通り Agent
+Orchestrator は SubAgent ではなく `.claude/agents/` に定義ファイルを
+持たないため（実体は [docs/agent-workflow.md](docs/agent-workflow.md)）。
+
+| ドキュメント | Purpose |
+|---|---|
+| [.claude/agents/product-strategist.md](.claude/agents/product-strategist.md) | 何を作るかを決める（Product Decision ONLY） |
+| [.claude/agents/builder.md](.claude/agents/builder.md) | 承認済みの製品定義を実装する（Implementation ONLY） |
+| [.claude/agents/reviewer.md](.claude/agents/reviewer.md) | 実装品質・ガバナンスをレビューする（Review ONLY） |
+| [.claude/agents/sweeper.md](.claude/agents/sweeper.md) | 不要なコード・複雑さを削る（Simplification ONLY） |
+| [.claude/agents/grower.md](.claude/agents/grower.md) | 成長施策を立案・検証する（Growth Diagnosis ONLY） |
+| [.claude/agents/template-sync.md](.claude/agents/template-sync.md) | テンプレートと派生アプリの差分を同期する（Template Drift Management ONLY） |
 
 ### プロダクト管理
 
@@ -237,6 +257,8 @@ common はテンプレートの中核であり、複製後も変更しないこ�
 | docs/review-plan.md / docs/review-decisions.md（生成物） | Reviewer の成果物（SSOT） |
 | docs/sweep-plan.md（生成物） | Sweeper の成果物 |
 | docs/growth-plan.md（生成物） | Grower の成果物 |
+| docs/template-sync-plan.md（生成物） | Template Sync Agent の成果物（派生アプリで実際に実行された時に初めて生成される） |
+| docs/template-sync-decisions.md（生成物） | Template Sync Agent の同期履歴ログ（SSOT、append-only） |
 
 ### 運用・アーキテクチャ
 
@@ -550,6 +572,42 @@ Railway を前提としています。
    [Product Development Roles](#3-product-development-roles) の
    SubAgent フローに従う
 
+### Updating an Existing Derived App
+
+新規立ち上げとは逆に、**既にリリース済みの派生アプリへテンプレート側の
+更新を反映したい場合**は [Template Sync](#21-template-sync)
+（[.claude/agents/template-sync.md](.claude/agents/template-sync.md)）
+を使います。
+
+```
+1. テンプレートリポジトリを更新する
+   ↓
+2. 派生アプリ側で Template Sync Agent を起動する
+   ↓
+3. Apply / Preserve / Conflict / Ignore の分類を確認する
+   ↓
+4. docs/template-sync-plan.md を承認する（部分承認可）
+   ↓
+5. 承認された Apply 項目のみ Sync を実行する
+   ↓
+6. GitHub Actions（CI）で結果を確認する
+   ↓
+7. docs/template-sync-decisions.md に同期履歴を記録する
+```
+
+```mermaid
+flowchart TD
+    S1[1. テンプレートリポジトリを更新する] --> S2[2. Template Sync Agent を起動する]
+    S2 --> S3[3. Apply / Preserve / Conflict / Ignore を確認する]
+    S3 --> S4[4. docs/template-sync-plan.md を承認する]
+    S4 --> S5[5. 承認された Apply 項目のみ Sync を実行する]
+    S5 --> S6[6. GitHub Actions で結果を確認する]
+    S6 --> S7[7. docs/template-sync-decisions.md に記録する]
+```
+
+詳細な責務・フェーズ構成は [Template Sync](#21-template-sync) 章を
+参照してください。
+
 ---
 
 ## 19. Roadmap
@@ -565,9 +623,152 @@ v1.1 候補（v1.0.0 リリースレビューでのフォローアップ合意�
 - **リセットメールのドメイン固定** — Host ヘッダ由来ではなく `SITE_URL` から生成
 - **Redis レートリミット** — 複数ワーカー / 水平スケール対応
 
+Template Sync 関連（将来検討）:
+
+- **Template Maintainer Agent** — 現在は人間のテンプレートオーナーが
+  担当している `docs/template-evolution.md` の Proposed/Accepted
+  キュレーションとテンプレートリリース判断を SubAgent 化する
+- **Automatic Drift Detection** — テンプレートと派生アプリの差分を
+  定期的に自動検知し、Template Sync の Analyze フェーズ相当を
+  スケジュール実行する
+- **GitHub PR-based Template Sync** — Sync Execution の結果をローカル
+  コミットではなく Pull Request として提案する運用への対応
+- **Multi-template Support** — 複数バージョン・複数派生元テンプレート
+  からの同期先切り替え対応
+
 ---
 
 ## 20. License
 
 現時点で LICENSE ファイルは同梱していません（プライベートテンプレート、All rights reserved）。
 テンプレートとして公開・配布する場合は、利用条件を定めた LICENSE の追加を検討してください。
+
+---
+
+## 21. Template Sync
+
+**v1.0.0+** で導入された [Template Sync](.claude/agents/template-sync.md)
+は、このテンプレート本体の更新を、派生アプリへ安全に反映するための
+SubAgent です。テンプレートと派生アプリの「食い違い（Template
+Drift）」を検出し、どの差分を取り込むべきか、どの差分を派生アプリ固有
+として守るべきかを整理します。
+
+### Template Lifecycle Flow
+
+これは [標準開発フロー](#4-標準開発フロー)（Idea → Release）とは別軸の
+フローです。標準開発フローが「1つの派生アプリの中で何をどう作るか」を
+扱うのに対し、Template Lifecycle Flow は「テンプレート本体の改善を、
+既に存在する派生アプリへどう届けるか」を扱います。
+
+```
+Template Maintainer（将来追加予定。現在はテンプレートオーナーが担当）
+      ↓
+Template Release
+      ↓
+Template Sync
+      ↓
+Derived App
+```
+
+```mermaid
+flowchart TD
+    TM["Template Maintainer (未実装 — 現在はテンプレートオーナーが担当)"] --> TR[Template Release]
+    TR --> TS[Template Sync]
+    TS --> DA[Derived App]
+```
+
+### Template Sync Agent
+
+**Purpose**: テンプレート本体と派生アプリの差分（Template Drift）を
+安全に管理する。Template Drift Management ONLY — 製品判断・新機能実装・
+リファクタリング・成長施策・レビュー代行・テンプレート自体の改善提案は
+行いません（詳細な責務境界は [.claude/agents/template-sync.md](.claude/agents/template-sync.md)）。
+
+**Responsibilities**:
+
+- Template Drift Analysis（テンプレートと派生アプリの差分分析）
+- Apply / Preserve / Conflict / Ignore への分類
+- 派生アプリ固有実装の保護
+- 承認済み課金戦略（例: Section 4-bis 承認済みの Freemium）の保護
+- CI（GitHub Actions）確認
+- 同期履歴の記録（`docs/template-sync-decisions.md`）
+
+**Workflow**: 他の SubAgent と同じ、5フェーズ・STOP ゲート方式です。
+
+```
+Analyze
+ ↓
+Sync Plan
+ ↓
+Human Approval
+ ↓
+Sync Execution
+ ↓
+Verification
+```
+
+各フェーズでの編集権限は固定ではなくフェーズごとに定義されており、
+Sync Execution フェーズは人間が明示的に承認した Apply 対象ファイルのみ
+変更できます。push は Verification フェーズで、ユーザーが明示的に
+承認した場合のみ行われます（詳細:
+[.claude/agents/template-sync.md](.claude/agents/template-sync.md)）。
+
+### Template Source Locking
+
+Template Sync Agent は、同期元となるテンプレートを Analyze フェーズで
+以下の情報として固定します。
+
+```
+Repository
+Branch
+Commit SHA
+Fetch Time
+```
+
+Sync Plan・Sync Execution の各フェーズは、この Analyze フェーズで
+固定した Commit SHA を同期元として使い続けます。これにより、Analyze
+の後にテンプレート側の `main` ブランチが更新されても、同期対象が
+途中で変わらないことを保証します。
+
+### Drift Classification
+
+| Category | Meaning |
+|----------|----------|
+| Apply | 安全に同期する |
+| Preserve | 派生アプリ側を優先する |
+| Conflict | 人間の判断が必要 |
+| Ignore | 同期不要 |
+
+#### Typical Preserve Examples
+
+- `apps/app/**`
+- `templates/app/**`
+- `tests/e2e/**`
+- Product Docs（`docs/product-context.md` / `docs/mvp-scope.md` /
+  `docs/product-definition.md` / `docs/product-decisions.md` /
+  `docs/growth-decisions.md`）
+- 承認済みの Freemium など、派生アプリ固有の Billing Strategy
+  （CLAUDE.md Section 4-bis 承認済み）
+
+#### Typical Conflict Examples
+
+- billing / paywall 関連コード
+- `apps/common/middleware.py`
+- `config/settings.py`
+- `page_header.html` のような、派生アプリ側の既知バグ修正と
+  テンプレート更新が衝突するケース
+- CI configuration
+
+### Typical Use Cases
+
+- テンプレート側で README の運用ドキュメントが更新された →
+  派生アプリにも Apply で反映したい
+- テンプレート側で Sekai UI（`ui/` 配下）のコンポーネントが更新された
+  → 派生アプリの UI 更新を Apply で取り込みたいが、派生アプリ側で
+  独自にカスタマイズした画面は Preserve / Conflict として区別したい
+- テンプレート側で billing / paywall 関連コードに変更が入った →
+  事故りやすい領域のため自動 Apply はせず、Conflict として人間の
+  判断に委ねたい
+- 派生アプリが Section 4-bis 承認済みの Freemium など独自の Billing
+  Strategy を採用している → テンプレートのデフォルト課金ロジックで
+  上書きされないよう Preserve として保護したい
